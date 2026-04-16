@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "name": "David Chen",
+    "role": "VP of Engineering",
+    "company": "TSMC",
+    "industry": "Semiconductor",
+    "expertise": ["chip design", "manufacturing processes", "team leadership", "supply chain"],
+    "lookingFor": "Mentoring next-gen engineers, exploring AI hardware startups",
+    "canOffer": "Deep semiconductor industry knowledge, hiring connections in chip design, manufacturing operations expertise"
+  },
+  {
+    "id": 2,
+    "name": "Michelle Lin",
+    "role": "Partner",
+    "company": "Cooley LLP",
+    "industry": "Legal / Venture Capital",
+    "expertise": ["startup law", "venture financing", "M&A", "intellectual property"],
+    "lookingFor": "Connecting with early-stage founders who need legal guidance",
+    "canOffer": "Startup legal strategy, term sheet reviews, introductions to VCs in her network"
+  },
+  {
+    "id": 3,
+    "name": "Jason Wu",
+    "role": "Managing Director",
+    "company": "JP Morgan",
+    "industry": "Finance / Investment Banking",
+    "expertise": ["cross-border M&A", "technology sector coverage", "capital markets"],
+    "lookingFor": "Meeting founders building fintech or enterprise SaaS",
+    "canOffer": "Financial strategy for growth-stage companies, IPO readiness advice, investor introductions"
+  },
+  {
+    "id": 4,
+    "name": "Sarah Huang",
+    "role": "Founder & CEO",
+    "company": "NovaBio Therapeutics",
+    "industry": "Healthcare / Biotech",
+    "expertise": ["drug discovery", "biotech fundraising", "FDA regulatory pathways", "clinical trials"],
+    "lookingFor": "Series A investors focused on healthcare, regulatory consultants, partnerships with larger pharma",
+    "canOffer": "Biotech startup experience, regulatory navigation, connections in the healthcare VC community"
+  },
+  {
+    "id": 5,
+    "name": "Kevin Chang",
+    "role": "Director of Product",
+    "company": "Google",
+    "industry": "Technology / AI",
+    "expertise": ["product management", "AI/ML products", "search", "consumer tech"],
+    "lookingFor": "Advising AI startups, angel investing opportunities",
+    "canOffer": "Product strategy mentorship, big tech hiring referrals, AI product development insights"
+  },
+  {
+    "id": 6,
+    "name": "Lisa Tran",
+    "role": "General Partner",
+    "company": "Pacific Ventures",
+    "industry": "Venture Capital",
+    "expertise": ["early-stage investing", "B2B SaaS", "healthcare IT", "market sizing"],
+    "lookingFor": "Deal flow from MJAA community founders, co-investment partners",
+    "canOffer": "Seed to Series A funding, portfolio company introductions, fundraising coaching"
+  },
+  {
+    "id": 7,
+    "name": "Eric Nakamura",
+    "role": "CTO",
+    "company": "Ascend Robotics",
+    "industry": "Robotics / AI",
+    "expertise": ["robotics engineering", "computer vision", "AI strategy", "hardware-software integration"],
+    "lookingFor": "Understanding how AI can transform his company's operations, finding technical co-founders for a side venture",
+    "canOffer": "Robotics industry connections, hardware prototyping resources, engineering mentorship"
+  },
+  {
+    "id": 8,
+    "name": "Annie Liu",
+    "role": "Senior Manager",
+    "company": "Deloitte Consulting",
+    "industry": "Consulting / Digital Transformation",
+    "expertise": ["digital transformation", "enterprise AI adoption", "change management", "stakeholder communication"],
+    "lookingFor": "Transitioning to a startup or tech company, expanding her network in Silicon Valley",
+    "canOffer": "Enterprise sales strategy, Fortune 500 client relationships, presentation and communication coaching"
+  },
+  {
+    "id": 9,
+    "name": "Raymond Chao",
+    "role": "Serial Entrepreneur",
+    "company": "Previously founded CloudSync (acquired by Salesforce)",
+    "industry": "Enterprise Software",
+    "expertise": ["enterprise SaaS", "B2B sales", "startup exits", "company building"],
+    "lookingFor": "Mentoring first-time founders, finding his next big idea",
+    "canOffer": "Exit strategy advice, B2B go-to-market playbooks, warm intros to Salesforce ecosystem"
+  },
+  {
+    "id": 10,
+    "name": "Jennifer Tsai",
+    "role": "Chief Medical Officer",
+    "company": "Kaiser Permanente (Regional)",
+    "industry": "Healthcare",
+    "expertise": ["health systems", "clinical operations", "health IT adoption", "population health"],
+    "lookingFor": "Health tech startups solving real clinical problems, not just apps",
+    "canOffer": "Clinical validation partnerships, pilot programs within Kaiser, healthcare domain expertise"
+  },
+  {
+    "id": 11,
+    "name": "Tony Pham",
+    "role": "Staff Engineer",
+    "company": "Meta",
+    "industry": "Technology / Infrastructure",
+    "expertise": ["distributed systems", "infrastructure at scale", "backend architecture", "open source"],
+    "lookingFor": "Contributing to open source AI projects, exploring startup ideas in developer tools",
+    "canOffer": "System design mentorship, code reviews, big tech interview prep"
+  },
+  {
+    "id": 12,
+    "name": "Grace Kim",
+    "role": "Marketing Director",
+    "company": "China Airlines (North America)",
+    "industry": "Aviation / Marketing",
+    "expertise": ["brand marketing", "cross-cultural campaigns", "event sponsorships", "community partnerships"],
+    "lookingFor": "Community partnerships for brand visibility, understanding digital marketing trends",
+    "canOffer": "Event sponsorship connections, travel industry insights, marketing strategy for Asian-American audiences"
+  },
+  {
+    "id": 13,
+    "name": "Brian Hsu",
+    "role": "Principal",
+    "company": "McKinsey & Company",
+    "industry": "Management Consulting",
+    "expertise": ["corporate strategy", "tech sector analysis", "organizational design", "growth strategy"],
+    "lookingFor": "Exploring entrepreneurship, connecting with technical co-founders",
+    "canOffer": "Strategy frameworks, market analysis, executive coaching, McKinsey alumni network"
+  },
+  {
+    "id": 14,
+    "name": "Diana Wen",
+    "role": "Founder",
+    "company": "EduPath AI",
+    "industry": "EdTech / AI",
+    "expertise": ["AI tutoring", "K-12 education", "product-led growth", "early-stage fundraising"],
+    "lookingFor": "Pilot schools in the Bay Area, a lead designer, Series A readiness advice",
+    "canOffer": "EdTech market insights, Y Combinator application tips (YC W24), founder-to-founder support"
+  },
+  {
+    "id": 15,
+    "name": "Michael Tang",
+    "role": "Investment Director",
+    "company": "UMC Capital",
+    "industry": "Semiconductor / Corporate VC",
+    "expertise": ["corporate venture capital", "semiconductor investment", "cross-Pacific business", "due diligence"],
+    "lookingFor": "AI chip startups, companies building on top of semiconductor supply chains",
+    "canOffer": "Corporate VC perspective, cross-Pacific business introductions (Taiwan-US), investment readiness coaching"
+  },
+  {
+    "id": 16,
+    "name": "Priya Sharma",
+    "role": "Head of Data Science",
+    "company": "Uber",
+    "industry": "Technology / Mobility",
+    "expertise": ["machine learning", "marketplace dynamics", "data strategy", "experimentation"],
+    "lookingFor": "Mentoring women in tech, advising mobility/logistics startups",
+    "canOffer": "ML expertise, A/B testing and experimentation best practices, data team building"
+  },
+  {
+    "id": 17,
+    "name": "Alex Nguyen",
+    "role": "Recent Graduate",
+    "company": "UC Berkeley (Class of 2025)",
+    "industry": "New to Industry",
+    "expertise": ["computer science", "web development", "eager to learn", "fresh perspective"],
+    "lookingFor": "Industry mentorship, understanding how tech companies actually work, career guidance in AI/ML",
+    "canOffer": "Energy, willingness to help with projects, latest academic knowledge in CS"
+  },
+  {
+    "id": 18,
+    "name": "Cindy Zhao",
+    "role": "VP of Business Development",
+    "company": "Palo Alto Networks",
+    "industry": "Cybersecurity",
+    "expertise": ["cybersecurity sales", "enterprise partnerships", "channel strategy", "CISO relationships"],
+    "lookingFor": "Cybersecurity startups to advise or invest in, expanding her executive network",
+    "canOffer": "Go-to-market strategy for security products, CISO introductions, enterprise deal structuring"
+  },
+  {
+    "id": 19,
+    "name": "Henry Lee",
+    "role": "Executive Chef & Owner",
+    "company": "Bamboo Garden Restaurant Group",
+    "industry": "Food & Hospitality",
+    "expertise": ["restaurant operations", "hospitality management", "community events", "catering"],
+    "lookingFor": "Tech solutions for restaurant management, partnerships for community events",
+    "canOffer": "Event venues and catering for MJAA events, small business perspective, community gathering spaces"
+  },
+  {
+    "id": 20,
+    "name": "Stephanie Ma",
+    "role": "Nonprofit Director",
+    "company": "Asian Pacific Community Fund",
+    "industry": "Nonprofit / Community Development",
+    "expertise": ["nonprofit management", "grant writing", "community organizing", "AAPI advocacy"],
+    "lookingFor": "Tech volunteers for nonprofit projects, corporate sponsors, cross-community partnerships",
+    "canOffer": "Nonprofit formation guidance, grant opportunities, connections to AAPI organizations nationwide"
+  }
+]

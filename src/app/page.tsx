@@ -1,65 +1,80 @@
-import Image from "next/image";
+"use client";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
+      <div className="max-w-sm w-full text-center">
+        <div className="mb-6">
+          <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="w-8 h-8 text-black"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              <path d="M4.913 2.658c2.075-.27 4.19-.408 6.337-.408 2.147 0 4.262.139 6.337.408 1.922.25 3.291 1.861 3.405 3.727a4.403 4.403 0 00-1.032-.211 50.89 50.89 0 00-8.42 0c-2.358.196-4.04 2.19-4.04 4.434v4.286a4.47 4.47 0 002.433 3.984L7.28 21.53A.75.75 0 016 21v-4.03a48.527 48.527 0 01-1.087-.128C2.905 16.58 1.5 14.833 1.5 12.862V6.638c0-1.97 1.405-3.718 3.413-3.979z" />
+              <path d="M15.75 7.5c-1.376 0-2.739.057-4.086.169C10.124 7.797 9 9.103 9 10.609v4.285c0 1.507 1.128 2.814 2.67 2.94 1.243.102 2.5.157 3.768.165l2.782 2.781a.75.75 0 001.28-.53v-2.39l.33-.026c1.542-.125 2.67-1.433 2.67-2.94v-4.286c0-1.505-1.125-2.811-2.664-2.94A49.392 49.392 0 0015.75 7.5z" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">MJAA Connect</h1>
+          <p className="text-zinc-400 text-lg">
+            Your AI matchmaker for the MJAA/MJW community
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="bg-zinc-900 rounded-2xl p-6 mb-6">
+          <p className="text-zinc-300 text-sm mb-4">
+            Open WhatsApp and send a message to get started:
+          </p>
+          <div className="bg-white rounded-xl p-4 mb-4">
+            {/* QR code placeholder — replace with actual Twilio sandbox QR */}
+            <div className="w-48 h-48 mx-auto bg-zinc-100 rounded-lg flex items-center justify-center">
+              <p className="text-zinc-500 text-xs text-center px-4">
+                QR code will be here
+                <br />
+                (Twilio sandbox link)
+              </p>
+            </div>
+          </div>
+          <p className="text-zinc-500 text-xs">
+            Or text <span className="text-amber-500 font-mono">join [your-sandbox-code]</span> to
+            <br />
+            <span className="text-white font-mono">+1 415 523 8886</span>
+          </p>
         </div>
-      </main>
+
+        <div className="space-y-3 text-left">
+          <div className="flex gap-3 items-start">
+            <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-amber-500 text-xs font-bold">1</span>
+            </div>
+            <p className="text-zinc-400 text-sm">
+              Tell the AI what you&apos;re looking for — funding, mentorship,
+              partnerships, or anything else
+            </p>
+          </div>
+          <div className="flex gap-3 items-start">
+            <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-amber-500 text-xs font-bold">2</span>
+            </div>
+            <p className="text-zinc-400 text-sm">
+              Get matched with 2-3 members from our network who can help
+            </p>
+          </div>
+          <div className="flex gap-3 items-start">
+            <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-amber-500 text-xs font-bold">3</span>
+            </div>
+            <p className="text-zinc-400 text-sm">
+              Receive a personalized intro message you can send right away
+            </p>
+          </div>
+        </div>
+
+        <p className="text-zinc-600 text-xs mt-8">
+          Built with love by the MJAA Family
+        </p>
+      </div>
     </div>
   );
 }
