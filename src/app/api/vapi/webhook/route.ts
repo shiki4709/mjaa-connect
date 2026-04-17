@@ -105,9 +105,10 @@ Return ONLY valid JSON — an array of match objects:
 ]
 
 ## IMPORTANT:
-- Each bullet should be SPECIFIC and detailed — not generic. Reference actual expertise, industries, numbers, or context.
-- Think about WHY this match works from both sides, not just surface-level role overlap.
-- The intro message should feel personal and show you understand both people's situations.
+- Each bullet should be 1 sentence max — specific but concise.
+- The intro message should be 2-3 sentences max.
+- TOTAL per match must be UNDER 1500 characters. This is a WhatsApp message limit.
+- Be specific but brief. No filler words.
 
 ## Member Directory:
 ${memberContext}`,
@@ -130,8 +131,11 @@ ${memberContext}`,
     try {
       matches = JSON.parse(matchResult.text);
     } catch {
-      // Fallback: send raw text if JSON parsing fails
-      await sendWhatsAppMessage(customerNumber, matchResult.text);
+      // Fallback: send raw text if JSON parsing fails, truncated to fit
+      const fallback = matchResult.text.length > 1500
+        ? matchResult.text.slice(0, 1497) + "..."
+        : matchResult.text;
+      await sendWhatsAppMessage(customerNumber, fallback);
       return Response.json({ received: true });
     }
 
@@ -155,7 +159,11 @@ ${drawbackText}
 💬 Intro you can send:
 "${match.introMessage}"`;
 
-      await sendWhatsAppMessage(customerNumber, matchMessage);
+      // Twilio WhatsApp limit is 1600 chars — truncate if needed
+      const truncated = matchMessage.length > 1500
+        ? matchMessage.slice(0, 1497) + "..."
+        : matchMessage;
+      await sendWhatsAppMessage(customerNumber, truncated);
     }
 
     // Follow-up nudge
