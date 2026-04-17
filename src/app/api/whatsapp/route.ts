@@ -128,21 +128,11 @@ Do NOT re-ask onboarding questions. Instead:
 4. ALWAYS push for the call. If they seem hesitant, reassure them it's just 2 minutes and way easier than typing.
 ${voiceContext}
 
-## Matching format (send EACH match as its own message):
-When they say what they need, present 2-3 matches. For EACH match, format like this:
-
-*Name* (Role at Company)
-• Specific reason this person is relevant — reference their actual expertise or what they're building
-• How their background connects to what the user needs — be specific
-• What they can offer that directly helps
-• Any practical context (location, availability, etc.)
-
-Drawback: one honest caveat if any
-
-💬 Intro you can send:
-"A personalized copy-paste message showing value for BOTH sides"
-
-Send each match as a SEPARATE message. Be detailed and specific in each bullet — no surface-level generic recommendations.
+## Matching:
+When they say what they need, respond with [MATCHES_NEEDED] followed by what they're looking for.
+Example: "[MATCHES_NEEDED] looking for a job in AI/ML engineering"
+Do NOT try to list matches yourself. Do NOT say "one sec" or "let me find". Just output the tag.
+The system will generate and send matches automatically.
 
 ## Current user info:
 ${profile.name ? `Name: ${profile.name}` : "Name: not yet provided"}
@@ -374,6 +364,97 @@ export async function POST(req: Request) {
         aiResponse =
           "Hmm, I couldn't start the call right now. Let's keep going here instead! What do you do?";
       }
+    }
+
+    // Check if the AI wants to trigger matching
+    if (aiResponse.includes("[MATCHES_NEEDED]")) {
+      const lookingFor = aiResponse.replace("[MATCHES_NEEDED]", "").trim() || body;
+      aiResponse = `On it! Finding the best people in our community for you...`;
+
+      // Save state before async match generation
+      convo.messages.push({ role: "assistant", content: aiResponse });
+      convo.profile.lookingFor = lookingFor;
+      await setConversation(phoneNumber, convo);
+
+      // Generate matches via Claude
+      const matchResult = await generateText({
+        model: anthropic("claude-haiku-4-5-20251001"),
+        system: `You are MJAA Connect, matching community members. Given a user's profile, find 2-3 best matches from the directory.
+
+Return ONLY valid JSON — an array of match objects:
+[
+  {
+    "name": "Full Name",
+    "roleCompany": "Role at Company",
+    "bullets": [
+      "One sentence: specific reason this person is relevant",
+      "One sentence: how their background connects to user's needs",
+      "One sentence: what they can offer that directly helps"
+    ],
+    "drawback": "One honest caveat (or null)",
+    "introMessage": "2-3 sentence copy-paste intro showing value for BOTH sides."
+  }
+]
+
+TOTAL per match must be UNDER 1500 characters. Be specific but concise.
+
+## Member Directory:
+${memberContext}`,
+        messages: [
+          {
+            role: "user",
+            content: `Find matches for:
+Name: ${convo.profile.name || "unknown"}
+Role: ${convo.profile.role || "not specified"}
+Background: ${convo.profile.background || "not specified"}
+Strength: ${convo.profile.strength || "not specified"}
+Looking for: ${lookingFor}
+Can offer: ${convo.profile.canOffer || "not specified"}`,
+          },
+        ],
+      });
+
+      // Parse and send each match separately via REST API
+      try {
+        const cleaned = matchResult.text
+          .replace(/^```(?:json)?\s*/i, "")
+          .replace(/\s*```\s*$/, "")
+          .trim();
+        const matches = JSON.parse(cleaned) as Array<{
+          name: string;
+          roleCompany: string;
+          bullets: string[];
+          drawback: string | null;
+          introMessage: string;
+        }>;
+
+        for (const match of matches) {
+          const bulletText = match.bullets.map((b) => `• ${b}`).join("\n");
+          const drawbackText = match.drawback
+            ? `\nDrawback: ${match.drawback}`
+            : "";
+          const msg = `*${match.name}* (${match.roleCompany})
+${bulletText}
+${drawbackText}
+
+💬 Intro you can send:
+"${match.introMessage}"`;
+          const truncated = msg.length > 1500 ? msg.slice(0, 1497) + "..." : msg;
+          await sendWhatsAppMessage(phoneNumber, truncated);
+        }
+
+        await sendWhatsAppMessage(
+          phoneNumber,
+          `Just copy-paste any of those intros to reach out! Text me here anytime you want different connections.`
+        );
+      } catch {
+        const fallback = matchResult.text.length > 1500
+          ? matchResult.text.slice(0, 1497) + "..."
+          : matchResult.text;
+        await sendWhatsAppMessage(phoneNumber, fallback);
+      }
+
+      return twimlResponse(aiResponse);
     }
 
     convo.messages.push({ role: "assistant", content: aiResponse });
