@@ -276,20 +276,25 @@ export async function POST(req: Request) {
     // Debug: log every incoming message
     console.log("WHATSAPP INCOMING:", { body, from, phoneNumber });
 
-    // Intercept Twilio sandbox join messages — send greeting via REST API
-    // (TwiML responses are ignored by Twilio for join messages, so we send proactively)
+    // Intercept Twilio sandbox join messages — reset conversation and greet
     const lowerBody = body.toLowerCase().trim();
     if (lowerBody === "join southern-up" || lowerBody.startsWith("join ")) {
       const greeting =
         "Hey! Welcome to MJAA Connect — I'm your AI matchmaker for the MJAA community. I'll connect you with the right people based on what you need. Let's start — what's your name?";
+      // Always reset to fresh conversation on join
       const convo = newConversation();
       convo.messages.push({ role: "assistant", content: greeting });
       await setConversation(phoneNumber, convo);
-      // Send via REST API since Twilio ignores TwiML for sandbox join messages
-      await sendWhatsAppMessage(phoneNumber, greeting);
-      return new Response("<Response></Response>", {
-        headers: { "Content-Type": "text/xml" },
-      });
+      // Try REST API first, fall back to TwiML
+      const sent = await sendWhatsAppMessage(phoneNumber, greeting);
+      if (sent) {
+        return new Response("<Response></Response>", {
+          headers: { "Content-Type": "text/xml" },
+        });
+      }
+      // REST API failed — return via TwiML instead
+      console.log("REST API send failed, falling back to TwiML");
+      return twimlResponse(greeting);
     }
 
     // Get or create conversation state
