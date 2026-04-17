@@ -1,89 +1,120 @@
 "use client";
 
-// Twilio sandbox: users must text "join southern-up" to +1 415 523 8886 on WhatsApp
 const TWILIO_SANDBOX_NUMBER = "14155238886";
 const SANDBOX_CODE = "join southern-up";
 const WA_LINK = `https://wa.me/${TWILIO_SANDBOX_NUMBER}?text=${encodeURIComponent(SANDBOX_CODE)}`;
-// QR code via Google Charts API — encodes the wa.me deep link
-const QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(WA_LINK)}`;
+const QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(WA_LINK)}`;
+
+const STEPS = [
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+      </svg>
+    ),
+    title: "Quick voice chat",
+    desc: "A 2-minute call to learn what you do and what you need",
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+      </svg>
+    ),
+    title: "AI finds your matches",
+    desc: "Matched with 2-3 people from 500+ MJAA members",
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+      </svg>
+    ),
+    title: "Ready-to-send intros",
+    desc: "Copy-paste messages that show value for both sides",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
-      <div className="max-w-sm w-full text-center">
-        <div className="mb-6">
-          <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-8 h-8 text-black"
-            >
-              <path d="M4.913 2.658c2.075-.27 4.19-.408 6.337-.408 2.147 0 4.262.139 6.337.408 1.922.25 3.291 1.861 3.405 3.727a4.403 4.403 0 00-1.032-.211 50.89 50.89 0 00-8.42 0c-2.358.196-4.04 2.19-4.04 4.434v4.286a4.47 4.47 0 002.433 3.984L7.28 21.53A.75.75 0 016 21v-4.03a48.527 48.527 0 01-1.087-.128C2.905 16.58 1.5 14.833 1.5 12.862V6.638c0-1.97 1.405-3.718 3.413-3.979z" />
-              <path d="M15.75 7.5c-1.376 0-2.739.057-4.086.169C10.124 7.797 9 9.103 9 10.609v4.285c0 1.507 1.128 2.814 2.67 2.94 1.243.102 2.5.157 3.768.165l2.782 2.781a.75.75 0 001.28-.53v-2.39l.33-.026c1.542-.125 2.67-1.433 2.67-2.94v-4.286c0-1.505-1.125-2.811-2.664-2.94A49.392 49.392 0 0015.75 7.5z" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">MJAA Connect</h1>
-          <p className="text-zinc-400 text-lg">
-            Your AI matchmaker for the MJAA/MJW community
-          </p>
-        </div>
-
-        <div className="bg-zinc-900 rounded-2xl p-6 mb-6">
-          <p className="text-zinc-300 text-sm mb-4">
-            Scan to join on WhatsApp:
-          </p>
-          <a href={WA_LINK} target="_blank" rel="noopener noreferrer">
-            <div className="bg-white rounded-xl p-4 mb-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={QR_URL}
-                alt="Scan to open WhatsApp"
-                width={240}
-                height={240}
-                className="mx-auto"
-              />
-            </div>
-          </a>
-          <p className="text-zinc-500 text-xs">
-            Or text <span className="text-amber-500 font-mono">join southern-up</span> to
-            <br />
-            <span className="text-white font-mono">+1 415 523 8886</span> on WhatsApp
-          </p>
-        </div>
-
-        <div className="space-y-3 text-left">
-          <div className="flex gap-3 items-start">
-            <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-amber-500 text-xs font-bold">1</span>
-            </div>
-            <p className="text-zinc-400 text-sm">
-              Tell the AI what you&apos;re looking for — funding, mentorship,
-              partnerships, or anything else
-            </p>
-          </div>
-          <div className="flex gap-3 items-start">
-            <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-amber-500 text-xs font-bold">2</span>
-            </div>
-            <p className="text-zinc-400 text-sm">
-              Get matched with 2-3 members from our network who can help
-            </p>
-          </div>
-          <div className="flex gap-3 items-start">
-            <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-amber-500 text-xs font-bold">3</span>
-            </div>
-            <p className="text-zinc-400 text-sm">
-              Receive a personalized intro message you can send right away
-            </p>
-          </div>
-        </div>
-
-        <p className="text-zinc-600 text-xs mt-8">
-          Built with love by the MJAA Family
+    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-5 py-12">
+      {/* Hero */}
+      <div className="max-w-md w-full text-center mb-10">
+        <p className="text-amber-400 font-medium text-sm tracking-widest uppercase mb-3">
+          MJAA / MJW Community
+        </p>
+        <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-4">
+          Meet the right
+          <br />
+          people, <span className="text-amber-400">faster</span>
+        </h1>
+        <p className="text-zinc-400 text-lg leading-relaxed max-w-xs mx-auto">
+          AI-powered matchmaking that connects you with the people who can actually help.
         </p>
       </div>
+
+      {/* QR Card */}
+      <div className="max-w-sm w-full mb-10">
+        <a
+          href={WA_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block bg-zinc-900 border border-zinc-800 rounded-3xl p-8 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <div className="bg-white rounded-2xl p-5 mb-5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={QR_URL}
+              alt="Scan to open WhatsApp"
+              width={280}
+              height={280}
+              className="mx-auto rounded-lg"
+            />
+          </div>
+          <div className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl py-3 px-6 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.75.75 0 00.917.918l4.462-1.494A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.387 0-4.636-.818-6.44-2.252l-.446-.362-2.994 1.002 1.005-2.997-.372-.454A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+            </svg>
+            Open WhatsApp
+          </div>
+        </a>
+        <p className="text-zinc-600 text-xs text-center mt-3">
+          or text <span className="text-zinc-400 font-mono">join southern-up</span> to <span className="text-zinc-400 font-mono">+1 415 523 8886</span>
+        </p>
+      </div>
+
+      {/* How it works */}
+      <div className="max-w-sm w-full">
+        <h2 className="text-zinc-500 text-xs font-semibold tracking-widest uppercase text-center mb-6">
+          How it works
+        </h2>
+        <div className="space-y-4">
+          {STEPS.map((step, i) => (
+            <div
+              key={i}
+              className="flex gap-4 items-start bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4"
+            >
+              <div className="w-10 h-10 bg-amber-400/10 rounded-xl flex items-center justify-center flex-shrink-0 text-amber-400">
+                {step.icon}
+              </div>
+              <div>
+                <p className="text-white font-medium text-sm mb-0.5">
+                  {step.title}
+                </p>
+                <p className="text-zinc-500 text-sm leading-relaxed">
+                  {step.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <p className="text-zinc-700 text-xs mt-12">
+        MJAA Connect
+      </p>
     </div>
   );
 }
