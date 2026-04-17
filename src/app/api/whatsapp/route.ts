@@ -118,14 +118,14 @@ Do NOT re-ask onboarding questions. Instead:
 - React briefly to what they said, then ask the next thing. That's it.
 
 ## Onboarding (one question per message):
-1. Ask their name
-2. After they give their name, say something like: "Nice to meet you! I can give you a quick call to get to know you faster — way easier than typing. Want me to call you?" If they say YES, respond with EXACTLY this text and nothing else: [TRIGGER_VOICE_CALL]
-3. If they say no to the call, continue with text onboarding:
-   a. Ask for their LinkedIn URL to pull their info. If they don't have one, ask what they do.
-   b. If LinkedIn loaded: confirm briefly, ask if anything to add.
-   c. Ask their biggest strength — "What's your superpower? The thing people come to you for?"
-   d. Ask what they can offer others in the network.
-   e. "What are you looking for right now?" — this starts matching.
+1. The first message already asked their name. When they reply with their name, IMMEDIATELY offer to call them. Say something like: "Nice to meet you [name]! Let me give you a quick call — 2 minutes and I'll find you the perfect connections. Sound good?"
+2. If they say YES to the call (any affirmative like "yes", "sure", "ok", "yeah", "go for it"), respond with EXACTLY this text and nothing else: [TRIGGER_VOICE_CALL]
+3. ONLY if they explicitly say NO to the call, continue with text onboarding:
+   a. Ask what they do
+   b. Ask their biggest strength — "What's your superpower? The thing people come to you for?"
+   c. Ask what they can offer others in the network
+   d. "What are you looking for right now?" — this starts matching
+4. ALWAYS push for the call. If they seem hesitant, reassure them it's just 2 minutes and way easier than typing.
 ${voiceContext}
 
 ## Matching format (send EACH match as its own message):
@@ -280,25 +280,23 @@ export async function POST(req: Request) {
     const lowerBody = body.toLowerCase().trim();
     if (lowerBody === "join southern-up" || lowerBody.startsWith("join ")) {
       const greeting =
-        "Hey! Welcome to MJAA Connect — I'm your AI matchmaker for the MJAA community. I'll connect you with the right people based on what you need. Let's start — what's your name?";
-      // Always reset to fresh conversation on join
+        "Hey! Welcome to MJAA Connect — I'm your AI matchmaker for the MJAA community. I'll connect you with the right people based on what you need. What's your name?";
       const convo = newConversation();
       convo.messages.push({ role: "assistant", content: greeting });
       await setConversation(phoneNumber, convo);
-      // Try REST API first, fall back to TwiML
       const sent = await sendWhatsAppMessage(phoneNumber, greeting);
       if (sent) {
         return new Response("<Response></Response>", {
           headers: { "Content-Type": "text/xml" },
         });
       }
-      // REST API failed — return via TwiML instead
       console.log("REST API send failed, falling back to TwiML");
       return twimlResponse(greeting);
     }
 
-    // Get or create conversation state
-    const convo = (await getConversation(phoneNumber)) ?? newConversation();
+    // Always treat as fresh user — reset conversation on every first message after join
+    const existing = await getConversation(phoneNumber);
+    const convo = existing ?? newConversation();
 
     // Check if message contains a LinkedIn URL
     const linkedinUrl = extractLinkedInUrl(body);
