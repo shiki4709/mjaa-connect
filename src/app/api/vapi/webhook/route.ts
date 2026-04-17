@@ -129,7 +129,12 @@ ${memberContext}`,
       introMessage: string;
     }> = [];
     try {
-      matches = JSON.parse(matchResult.text);
+      // Strip markdown code fences if present (```json ... ```)
+      const cleaned = matchResult.text
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```\s*$/, "")
+        .trim();
+      matches = JSON.parse(cleaned);
     } catch {
       // Fallback: send raw text if JSON parsing fails, truncated to fit
       const fallback = matchResult.text.length > 1500
