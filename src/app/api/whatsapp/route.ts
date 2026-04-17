@@ -273,6 +273,9 @@ export async function POST(req: Request) {
 
     const phoneNumber = extractPhoneNumber(from);
 
+    // Debug: log every incoming message
+    console.log("WHATSAPP INCOMING:", { body, from, phoneNumber });
+
     // Intercept Twilio sandbox join messages — send greeting via REST API
     // (TwiML responses are ignored by Twilio for join messages, so we send proactively)
     const lowerBody = body.toLowerCase().trim();
