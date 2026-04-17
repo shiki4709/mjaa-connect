@@ -1,7 +1,8 @@
 "use client";
 
 const TWILIO_SANDBOX_NUMBER = "14155238886";
-const WA_LINK = `https://wa.me/${TWILIO_SANDBOX_NUMBER}?text=${encodeURIComponent("Hi")}`;
+const SANDBOX_CODE = "join southern-up";
+const WA_LINK = `https://wa.me/${TWILIO_SANDBOX_NUMBER}?text=${encodeURIComponent(SANDBOX_CODE)}`;
 const QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(WA_LINK)}`;
 
 const STEPS = [

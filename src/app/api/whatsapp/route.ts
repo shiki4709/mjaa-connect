@@ -7,6 +7,7 @@ import {
   newConversation,
   type ConversationState,
 } from "@/lib/store";
+import { sendWhatsAppMessage } from "@/lib/twilio";
 
 const memberContext = members
   .map(
@@ -272,7 +273,8 @@ export async function POST(req: Request) {
 
     const phoneNumber = extractPhoneNumber(from);
 
-    // Intercept Twilio sandbox join messages — greet immediately
+    // Intercept Twilio sandbox join messages — send greeting via REST API
+    // (TwiML responses are ignored by Twilio for join messages, so we send proactively)
     const lowerBody = body.toLowerCase().trim();
     if (lowerBody === "join southern-up" || lowerBody.startsWith("join ")) {
       const greeting =
@@ -280,7 +282,11 @@ export async function POST(req: Request) {
       const convo = newConversation();
       convo.messages.push({ role: "assistant", content: greeting });
       await setConversation(phoneNumber, convo);
-      return twimlResponse(greeting);
+      // Send via REST API since Twilio ignores TwiML for sandbox join messages
+      await sendWhatsAppMessage(phoneNumber, greeting);
+      return new Response("<Response></Response>", {
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
     // Get or create conversation state
