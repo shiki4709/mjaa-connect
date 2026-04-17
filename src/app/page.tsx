@@ -1,5 +1,12 @@
 "use client";
 
+// Twilio sandbox: users must text "join southern-up" to +1 415 523 8886 on WhatsApp
+const TWILIO_SANDBOX_NUMBER = "14155238886";
+const SANDBOX_CODE = "join southern-up";
+const WA_LINK = `https://wa.me/${TWILIO_SANDBOX_NUMBER}?text=${encodeURIComponent(SANDBOX_CODE)}`;
+// QR code via Google Charts API — encodes the wa.me deep link
+const QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(WA_LINK)}`;
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
@@ -24,22 +31,24 @@ export default function Home() {
 
         <div className="bg-zinc-900 rounded-2xl p-6 mb-6">
           <p className="text-zinc-300 text-sm mb-4">
-            Open WhatsApp and send a message to get started:
+            Scan to join on WhatsApp:
           </p>
-          <div className="bg-white rounded-xl p-4 mb-4">
-            {/* QR code placeholder — replace with actual Twilio sandbox QR */}
-            <div className="w-48 h-48 mx-auto bg-zinc-100 rounded-lg flex items-center justify-center">
-              <p className="text-zinc-500 text-xs text-center px-4">
-                QR code will be here
-                <br />
-                (Twilio sandbox link)
-              </p>
+          <a href={WA_LINK} target="_blank" rel="noopener noreferrer">
+            <div className="bg-white rounded-xl p-4 mb-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={QR_URL}
+                alt="Scan to open WhatsApp"
+                width={240}
+                height={240}
+                className="mx-auto"
+              />
             </div>
-          </div>
+          </a>
           <p className="text-zinc-500 text-xs">
-            Or text <span className="text-amber-500 font-mono">join [your-sandbox-code]</span> to
+            Or text <span className="text-amber-500 font-mono">join southern-up</span> to
             <br />
-            <span className="text-white font-mono">+1 415 523 8886</span>
+            <span className="text-white font-mono">+1 415 523 8886</span> on WhatsApp
           </p>
         </div>
 
