@@ -1,8 +1,7 @@
 "use client";
 
 const TWILIO_SANDBOX_NUMBER = "14155238886";
-const SANDBOX_CODE = "join southern-up";
-const WA_LINK = `https://wa.me/${TWILIO_SANDBOX_NUMBER}?text=${encodeURIComponent(SANDBOX_CODE)}`;
+const WA_LINK = `https://wa.me/${TWILIO_SANDBOX_NUMBER}?text=${encodeURIComponent("Hi")}`;
 const QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(WA_LINK)}`;
 
 const STEPS = [
@@ -80,7 +79,7 @@ export default function Home() {
           </div>
         </a>
         <p className="text-zinc-600 text-xs text-center mt-3">
-          Scan the QR code and hit send — that's it!
+          Scan, tap send, and start chatting
         </p>
       </div>
 
