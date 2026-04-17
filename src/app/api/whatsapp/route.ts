@@ -276,27 +276,28 @@ export async function POST(req: Request) {
     // Debug: log every incoming message
     console.log("WHATSAPP INCOMING:", { body, from, phoneNumber });
 
-    // Intercept Twilio sandbox join messages — reset conversation and greet
+    // On any "join" message, wipe conversation so next message starts fresh
     const lowerBody = body.toLowerCase().trim();
-    if (lowerBody === "join southern-up" || lowerBody.startsWith("join ")) {
-      const greeting =
-        "Hey! Welcome to MJAA Connect — I'm your AI matchmaker for the MJAA community. I'll connect you with the right people based on what you need. What's your name?";
-      const convo = newConversation();
-      convo.messages.push({ role: "assistant", content: greeting });
-      await setConversation(phoneNumber, convo);
-      const sent = await sendWhatsAppMessage(phoneNumber, greeting);
-      if (sent) {
-        return new Response("<Response></Response>", {
-          headers: { "Content-Type": "text/xml" },
-        });
-      }
-      console.log("REST API send failed, falling back to TwiML");
-      return twimlResponse(greeting);
+    if (lowerBody.startsWith("join ")) {
+      await setConversation(phoneNumber, newConversation());
+      // Twilio handles the join response — we just reset state
+      return new Response("<Response></Response>", {
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
-    // Always treat as fresh user — reset conversation on every first message after join
-    const existing = await getConversation(phoneNumber);
-    const convo = existing ?? newConversation();
+    // Get conversation — if none exists or it's empty (just reset), treat as brand new user
+    const convo = (await getConversation(phoneNumber)) ?? newConversation();
+
+    // First message after join (or first message ever) — always ask name
+    if (convo.messages.length === 0) {
+      const greeting =
+        "Hey! Welcome to MJAA Connect — I'm your AI matchmaker for the MJAA community. I'll connect you with the right people based on what you need. What's your name?";
+      convo.messages.push({ role: "user", content: body });
+      convo.messages.push({ role: "assistant", content: greeting });
+      await setConversation(phoneNumber, convo);
+      return twimlResponse(greeting);
+    }
 
     // Check if message contains a LinkedIn URL
     const linkedinUrl = extractLinkedInUrl(body);
