@@ -132,19 +132,33 @@ Strength: ${extractedProfile.strength || "not specified"}
 Looking for: ${lookingFor || "inferred from conversation context"}
 Can offer: ${extractedProfile.canOffer || "not specified"}`;
 
-    // Generate matches using Claude — even without explicit lookingFor,
-    // Claude can infer needs from role/background/strength
+    // Generate matches as structured JSON — one message per person, Boardy-style
     const matchResult = await generateText({
       model: anthropic("claude-haiku-4-5-20251001"),
-      system: `You are MJAA Connect, matching community members. Given a user's profile, suggest 2-3 matches from the directory.
+      system: `You are MJAA Connect, matching community members. Given a user's profile, find 2-3 best matches from the directory.
 
 ${!lookingFor ? `The user's "looking for" wasn't explicitly captured, but infer what they likely need based on their role, background, and strengths. Use the full transcript for context.` : ""}
 
-For each match provide:
-1. Their name and why they're a great match (1 sentence)
-2. A copy-paste intro message the user can send that shows value for BOTH sides
+Return ONLY valid JSON — an array of match objects:
+[
+  {
+    "name": "Full Name",
+    "roleCompany": "Role at Company",
+    "bullets": [
+      "Specific reason this person is relevant — reference their expertise, what they're building, concrete details",
+      "How their background maps to what the user needs — be specific about the connection",
+      "What they can offer that directly helps the user's goals",
+      "Any logistics or availability context"
+    ],
+    "drawback": "One honest caveat or limitation of this match (or null if none)",
+    "introMessage": "A copy-paste message the user can send to this person that shows value for BOTH sides. Be specific about what each person brings."
+  }
+]
 
-Keep it concise — this is a WhatsApp message.
+## IMPORTANT:
+- Each bullet should be SPECIFIC and detailed — not generic. Reference actual expertise, industries, numbers, or context.
+- Think about WHY this match works from both sides, not just surface-level role overlap.
+- The intro message should feel personal and show you understand both people's situations.
 
 ## Member Directory:
 ${memberContext}`,
@@ -156,19 +170,49 @@ ${memberContext}`,
       ],
     });
 
-    // Send a warm intro message first
+    // Parse matches and send each as a separate WhatsApp message
+    let matches: Array<{
+      name: string;
+      roleCompany: string;
+      bullets: string[];
+      drawback: string | null;
+      introMessage: string;
+    }> = [];
+    try {
+      matches = JSON.parse(matchResult.text);
+    } catch {
+      // Fallback: send raw text if JSON parsing fails
+      await sendWhatsAppMessage(customerNumber, matchResult.text);
+      return Response.json({ received: true });
+    }
+
+    // Send intro message
     await sendWhatsAppMessage(
       customerNumber,
-      `Great chatting with you ${userName}! I found some amazing people in our community for you.`
+      `Great chatting with you ${userName}! I found ${matches.length} people in our community you should meet 👇`
     );
 
-    // Send the matches
-    await sendWhatsAppMessage(customerNumber, matchResult.text);
+    // Send each match as a separate message — Boardy style
+    for (const match of matches) {
+      const bulletText = match.bullets.map((b) => `• ${b}`).join("\n");
+      const drawbackText = match.drawback
+        ? `\nDrawback: ${match.drawback}`
+        : "";
 
-    // Send a follow-up nudge
+      const matchMessage = `*${match.name}* (${match.roleCompany})
+${bulletText}
+${drawbackText}
+
+💬 Intro you can send:
+"${match.introMessage}"`;
+
+      await sendWhatsAppMessage(customerNumber, matchMessage);
+    }
+
+    // Follow-up nudge
     await sendWhatsAppMessage(
       customerNumber,
-      `Just copy-paste any of those intros to reach out! And if you're ever looking for different connections, just text me here anytime.`
+      `Just copy-paste any of those intros to reach out! Text me here anytime you want different connections.`
     );
 
     return Response.json({ received: true });

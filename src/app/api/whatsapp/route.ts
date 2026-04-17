@@ -1,26 +1,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import members from "@/data/members.json";
-
-// In-memory conversation store (keyed by phone number)
-// Note: resets on each serverless cold start — fine for a demo
-const conversations = new Map<
-  string,
-  {
-    messages: Array<{ role: "user" | "assistant"; content: string }>;
-    profile: {
-      name?: string;
-      role?: string;
-      background?: string;
-      strength?: string;
-      lookingFor?: string;
-      canOffer?: string;
-      linkedinUrl?: string;
-    };
-    onboardingStep: number;
-    linkedinLoaded: boolean;
-  }
->();
+import { conversations, type ConversationState } from "@/lib/store";
 
 const memberContext = members
   .map(
@@ -29,7 +10,6 @@ const memberContext = members
   )
   .join("\n\n");
 
-// Detect LinkedIn URL in a message
 function extractLinkedInUrl(text: string): string | null {
   const match = text.match(
     /https?:\/\/(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?/
@@ -37,7 +17,6 @@ function extractLinkedInUrl(text: string): string | null {
   return match ? match[0] : null;
 }
 
-// Scrape LinkedIn profile via Apify REST API
 async function scrapeLinkedInProfile(
   url: string
 ): Promise<{
@@ -53,7 +32,6 @@ async function scrapeLinkedInProfile(
   if (!apiToken) return null;
 
   try {
-    // Start the actor run
     const runRes = await fetch(
       `https://api.apify.com/v2/acts/dev_fusion~Linkedin-Profile-Scraper/runs?token=${apiToken}`,
       {
@@ -66,7 +44,6 @@ async function scrapeLinkedInProfile(
     const runId = runData?.data?.id;
     if (!runId) return null;
 
-    // Poll for completion (max 30 seconds)
     const deadline = Date.now() + 30000;
     let status = "";
     while (Date.now() < deadline) {
@@ -81,7 +58,6 @@ async function scrapeLinkedInProfile(
     }
     if (status !== "SUCCEEDED") return null;
 
-    // Fetch results
     const datasetId = runData?.data?.defaultDatasetId;
     const itemsRes = await fetch(
       `https://api.apify.com/v2/datasets/${datasetId}/items?token=${apiToken}`
@@ -112,15 +88,20 @@ async function scrapeLinkedInProfile(
   }
 }
 
-function getSystemPrompt(profile: {
-  name?: string;
-  role?: string;
-  background?: string;
-  strength?: string;
-  lookingFor?: string;
-  canOffer?: string;
-  linkedinUrl?: string;
-}) {
+function getSystemPrompt(convo: ConversationState) {
+  const { profile } = convo;
+
+  // If voice onboarding completed, skip to matching
+  const voiceContext = convo.vapiCallComplete
+    ? `\n\n## IMPORTANT: Voice onboarding already completed!
+The user just finished a voice call with you. Their profile is filled in below.
+Do NOT re-ask onboarding questions. Instead:
+- Warmly welcome them back to WhatsApp
+- Briefly confirm what you learned about them (1-2 sentences)
+- If "Looking for" is filled in, immediately suggest 2-3 matches from the directory
+- If "Looking for" is NOT filled in, ask just that one question to trigger matching`
+    : "";
+
   return `You are MJAA Connect, an AI matchmaker for the MJAA/MJW professional community via WhatsApp.
 
 ## CRITICAL: Keep every message SHORT.
@@ -132,16 +113,30 @@ function getSystemPrompt(profile: {
 
 ## Onboarding (one question per message):
 1. Ask their name
-2. Ask for their LinkedIn URL to pull their info. If they don't have one, ask what they do.
-3. If LinkedIn loaded: confirm briefly in 1-2 sentences, ask if anything to add.
-4. Ask their biggest strength — "What's your superpower? The thing people come to you for?"
-5. Ask what they can offer others in the network.
-6. "What are you looking for right now?" — this starts matching.
+2. After they give their name, say something like: "Nice to meet you! I can give you a quick call to get to know you faster — way easier than typing. Want me to call you?" If they say YES, respond with EXACTLY this text and nothing else: [TRIGGER_VOICE_CALL]
+3. If they say no to the call, continue with text onboarding:
+   a. Ask for their LinkedIn URL to pull their info. If they don't have one, ask what they do.
+   b. If LinkedIn loaded: confirm briefly, ask if anything to add.
+   c. Ask their biggest strength — "What's your superpower? The thing people come to you for?"
+   d. Ask what they can offer others in the network.
+   e. "What are you looking for right now?" — this starts matching.
+${voiceContext}
 
-If they skip LinkedIn, ask role, background, strength, what they offer — one per message.
+## Matching format (send EACH match as its own message):
+When they say what they need, present 2-3 matches. For EACH match, format like this:
 
-## Matching:
-When they say what they need, suggest 2-3 matches. For each: name, why they match, and a copy-paste intro message. The intro must show value for BOTH sides.
+*Name* (Role at Company)
+• Specific reason this person is relevant — reference their actual expertise or what they're building
+• How their background connects to what the user needs — be specific
+• What they can offer that directly helps
+• Any practical context (location, availability, etc.)
+
+Drawback: one honest caveat if any
+
+💬 Intro you can send:
+"A personalized copy-paste message showing value for BOTH sides"
+
+Send each match as a SEPARATE message. Be detailed and specific in each bullet — no surface-level generic recommendations.
 
 ## Current user info:
 ${profile.name ? `Name: ${profile.name}` : "Name: not yet provided"}
@@ -180,9 +175,85 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
+// Strip "whatsapp:" prefix to get raw phone number for Vapi
+function extractPhoneNumber(twilioFrom: string): string {
+  return twilioFrom.replace("whatsapp:", "");
+}
+
+// Trigger an outbound Vapi voice call
+async function triggerVapiCall(phoneNumber: string, userName: string): Promise<string | null> {
+  const apiKey = process.env.VAPI_API_KEY;
+  const phoneNumberId = process.env.VAPI_PHONE_NUMBER_ID;
+
+  if (!apiKey || !phoneNumberId) {
+    console.error("Missing VAPI_API_KEY or VAPI_PHONE_NUMBER_ID");
+    return null;
+  }
+
+  const res = await fetch("https://api.vapi.ai/call", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type: "outboundPhoneCall",
+      phoneNumberId,
+      customer: { number: phoneNumber },
+      assistant: {
+        model: {
+          provider: "anthropic",
+          model: "claude-haiku-4-5-20251001",
+          messages: [
+            {
+              role: "system",
+              content: `You are MJAA Connect, a warm and friendly AI matchmaker for the MJAA/MJW professional community.
+
+You're calling ${userName} to get to know them for matching with other community members. This is a SHORT call — 2 minutes max.
+
+## Your conversation flow (ask one thing at a time, react warmly to each answer):
+1. Greet them: "Hey ${userName}! This is MJAA Connect. Thanks for picking up! I just want to ask you a few quick questions so I can find you the perfect connections in our community."
+2. Ask what they do — their role and what their work is about
+3. Ask their superpower — "What's the thing people always come to you for?"
+4. Ask what they can offer the MJAA community
+5. Ask what they're looking for — "What would be most helpful for you right now? Could be mentorship, funding, partnerships, hiring — anything."
+6. After they answer, say something like: "Love it. I'm going to start looking through our community for the best people to connect you with. I'll send you a few matches on WhatsApp in just a moment — does that sound good?"
+7. Wait for their confirmation, then wrap up warmly: "Amazing! Keep an eye on WhatsApp — your matches are coming. Great chatting with you ${userName}!"
+8. End the call.
+
+## Rules:
+- Be conversational, warm, and natural — like a friend, not a survey
+- Keep it SHORT. React briefly to what they say, then move on
+- Don't repeat back everything they said — just acknowledge and ask the next thing
+- If they go off topic, gently guide back
+- The closing matters — make them EXCITED to check WhatsApp for their matches
+- Total call should be under 2 minutes`,
+            },
+          ],
+        },
+        voice: {
+          provider: "11labs",
+          voiceId: "sarah",
+        },
+        firstMessage: `Hey ${userName}! This is MJAA Connect. Thanks for picking up! I just want to ask a few quick questions so I can match you with the right people in our community. Sound good?`,
+        endCallFunctionEnabled: true,
+        recordingEnabled: true,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("Vapi call creation failed:", res.status, errorText);
+    return null;
+  }
+
+  const callData = await res.json();
+  return callData.id ?? null;
+}
+
 export async function POST(req: Request) {
   try {
-    // Twilio sends application/x-www-form-urlencoded
     const text = await req.text();
     const params = new URLSearchParams(text);
     const body = params.get("Body");
@@ -194,9 +265,11 @@ export async function POST(req: Request) {
       );
     }
 
+    const phoneNumber = extractPhoneNumber(from);
+
     // Get or create conversation state
-    if (!conversations.has(from)) {
-      conversations.set(from, {
+    if (!conversations.has(phoneNumber)) {
+      conversations.set(phoneNumber, {
         messages: [],
         profile: {},
         onboardingStep: 0,
@@ -204,14 +277,13 @@ export async function POST(req: Request) {
       });
     }
 
-    const convo = conversations.get(from)!;
+    const convo = conversations.get(phoneNumber)!;
 
     // Check if message contains a LinkedIn URL
     const linkedinUrl = extractLinkedInUrl(body);
     if (linkedinUrl && !convo.linkedinLoaded) {
       convo.profile.linkedinUrl = linkedinUrl;
 
-      // Scrape LinkedIn profile
       const linkedinData = await scrapeLinkedInProfile(linkedinUrl);
       if (linkedinData) {
         convo.linkedinLoaded = true;
@@ -220,7 +292,6 @@ export async function POST(req: Request) {
           convo.profile.role = linkedinData.headline || linkedinData.role;
         }
 
-        // Build background from experiences
         const bgParts: string[] = [];
         if (linkedinData.summary) bgParts.push(linkedinData.summary);
         if (linkedinData.experiences) {
@@ -236,27 +307,20 @@ export async function POST(req: Request) {
           convo.profile.background = bgParts.join(". ");
         }
 
-        // Inject LinkedIn data as context for the AI
-        convo.messages.push({
-          role: "user",
-          content: body,
-        });
+        convo.messages.push({ role: "user", content: body });
         convo.messages.push({
           role: "assistant",
           content: `[SYSTEM: LinkedIn profile loaded for ${linkedinData.name || "user"}. Role: ${linkedinData.headline || linkedinData.role || "unknown"}. ${convo.profile.background || ""}. Now summarize this back to the user warmly and ask for confirmation.]`,
         });
-        // Remove the system message so AI generates a fresh response
         convo.messages.pop();
       } else {
-        // Scrape failed — just treat as normal message
         convo.messages.push({ role: "user", content: body });
       }
     } else {
-      // Normal message
       convo.messages.push({ role: "user", content: body });
     }
 
-    // Keep conversation history manageable (last 20 messages)
+    // Keep conversation history manageable
     if (convo.messages.length > 20) {
       convo.messages = convo.messages.slice(-20);
     }
@@ -264,13 +328,29 @@ export async function POST(req: Request) {
     // Generate AI response
     const result = await generateText({
       model: anthropic("claude-haiku-4-5-20251001"),
-      system: getSystemPrompt(convo.profile),
+      system: getSystemPrompt(convo),
       messages: convo.messages,
     });
 
-    const aiResponse = result.text;
+    let aiResponse = result.text;
 
-    // Store AI response in history
+    // Check if the AI wants to trigger a voice call
+    if (aiResponse.includes("[TRIGGER_VOICE_CALL]")) {
+      const callId = await triggerVapiCall(
+        phoneNumber,
+        convo.profile.name || "there"
+      );
+
+      if (callId) {
+        convo.vapiCallId = callId;
+        aiResponse =
+          "Calling you now! Pick up the phone — I'll ask you a few quick questions and then send your matches right here on WhatsApp.";
+      } else {
+        aiResponse =
+          "Hmm, I couldn't start the call right now. Let's keep going here instead! What do you do?";
+      }
+    }
+
     convo.messages.push({ role: "assistant", content: aiResponse });
 
     // Try to extract name from conversation if not yet known
