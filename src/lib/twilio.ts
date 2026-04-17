@@ -29,10 +29,12 @@ export async function sendWhatsAppMessage(
     body: params.toString(),
   });
 
+  const responseText = await res.text();
   if (!res.ok) {
-    const errorText = await res.text();
-    console.error("Twilio send failed:", res.status, errorText);
+    console.error("Twilio send failed:", res.status, responseText);
+    console.error("Twilio send params:", { from: `whatsapp:${fromNumber}`, to: `whatsapp:${to}` });
     return false;
   }
+  console.log("Twilio send success:", { to, bodyLength: body.length });
   return true;
 }

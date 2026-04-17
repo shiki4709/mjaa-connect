@@ -24,7 +24,10 @@ export async function POST(req: Request) {
     const { call, transcript } = body.message;
     const customerNumber = call?.customer?.number;
 
+    console.log("VAPI END-OF-CALL:", { customerNumber, hasTranscript: !!transcript, transcriptLength: transcript?.length });
+
     if (!customerNumber || !transcript) {
+      console.error("VAPI: Missing customerNumber or transcript");
       return Response.json({ received: true });
     }
 
