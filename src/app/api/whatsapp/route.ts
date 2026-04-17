@@ -1,7 +1,12 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import members from "@/data/members.json";
-import { conversations, type ConversationState } from "@/lib/store";
+import {
+  getConversation,
+  setConversation,
+  newConversation,
+  type ConversationState,
+} from "@/lib/store";
 
 const memberContext = members
   .map(
@@ -268,16 +273,7 @@ export async function POST(req: Request) {
     const phoneNumber = extractPhoneNumber(from);
 
     // Get or create conversation state
-    if (!conversations.has(phoneNumber)) {
-      conversations.set(phoneNumber, {
-        messages: [],
-        profile: {},
-        onboardingStep: 0,
-        linkedinLoaded: false,
-      });
-    }
-
-    const convo = conversations.get(phoneNumber)!;
+    const convo = (await getConversation(phoneNumber)) ?? newConversation();
 
     // Check if message contains a LinkedIn URL
     const linkedinUrl = extractLinkedInUrl(body);
@@ -373,6 +369,9 @@ export async function POST(req: Request) {
         convo.profile.name = name;
       }
     }
+
+    // Persist conversation state to Redis
+    await setConversation(phoneNumber, convo);
 
     return twimlResponse(aiResponse);
   } catch (error) {

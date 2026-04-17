@@ -1,7 +1,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import members from "@/data/members.json";
-import { conversations } from "@/lib/store";
+import { getConversation, setConversation, newConversation } from "@/lib/store";
 
 const memberContext = members
   .map(
@@ -89,36 +89,20 @@ Return ONLY valid JSON with these fields (use null for anything not mentioned):
       extractedProfile = { background: transcript };
     }
 
-    // Update the shared conversation state
-    const convo = conversations.get(customerNumber);
-    if (convo) {
-      if (extractedProfile.name) convo.profile.name = extractedProfile.name;
-      if (extractedProfile.role) convo.profile.role = extractedProfile.role;
-      if (extractedProfile.background)
-        convo.profile.background = extractedProfile.background;
-      if (extractedProfile.strength)
-        convo.profile.strength = extractedProfile.strength;
-      if (extractedProfile.lookingFor)
-        convo.profile.lookingFor = extractedProfile.lookingFor;
-      if (extractedProfile.canOffer)
-        convo.profile.canOffer = extractedProfile.canOffer;
-      convo.vapiCallComplete = true;
-    } else {
-      conversations.set(customerNumber, {
-        messages: [],
-        profile: {
-          name: extractedProfile.name ?? undefined,
-          role: extractedProfile.role ?? undefined,
-          background: extractedProfile.background ?? undefined,
-          strength: extractedProfile.strength ?? undefined,
-          lookingFor: extractedProfile.lookingFor ?? undefined,
-          canOffer: extractedProfile.canOffer ?? undefined,
-        },
-        onboardingStep: 0,
-        linkedinLoaded: false,
-        vapiCallComplete: true,
-      });
-    }
+    // Update the shared conversation state in Redis
+    const convo = (await getConversation(customerNumber)) ?? newConversation();
+    if (extractedProfile.name) convo.profile.name = extractedProfile.name;
+    if (extractedProfile.role) convo.profile.role = extractedProfile.role;
+    if (extractedProfile.background)
+      convo.profile.background = extractedProfile.background;
+    if (extractedProfile.strength)
+      convo.profile.strength = extractedProfile.strength;
+    if (extractedProfile.lookingFor)
+      convo.profile.lookingFor = extractedProfile.lookingFor;
+    if (extractedProfile.canOffer)
+      convo.profile.canOffer = extractedProfile.canOffer;
+    convo.vapiCallComplete = true;
+    await setConversation(customerNumber, convo);
 
     // Generate matches and send WhatsApp follow-up
     const userName = extractedProfile.name || "there";
