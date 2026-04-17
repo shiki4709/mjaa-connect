@@ -40,13 +40,13 @@ export default function Home() {
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-5 py-12">
       {/* Hero */}
       <div className="max-w-md w-full text-center mb-10">
-        <p className="text-amber-400 font-medium text-sm tracking-widest uppercase mb-3">
+        <p className="text-blue-400 font-medium text-sm tracking-widest uppercase mb-3">
           MJAA / MJW Community
         </p>
         <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-4">
           Meet the right
           <br />
-          people, <span className="text-amber-400">faster</span>
+          people, <span className="text-blue-400">faster</span>
         </h1>
         <p className="text-zinc-400 text-lg leading-relaxed max-w-xs mx-auto">
           AI-powered matchmaking that connects you with the people who can actually help.
@@ -95,7 +95,7 @@ export default function Home() {
               key={i}
               className="flex gap-4 items-start bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4"
             >
-              <div className="w-10 h-10 bg-amber-400/10 rounded-xl flex items-center justify-center flex-shrink-0 text-amber-400">
+              <div className="w-10 h-10 bg-blue-400/10 rounded-xl flex items-center justify-center flex-shrink-0 text-blue-400">
                 {step.icon}
               </div>
               <div>
