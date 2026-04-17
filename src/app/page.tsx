@@ -1,8 +1,7 @@
 "use client";
 
 const TWILIO_SANDBOX_NUMBER = "14155238886";
-const SANDBOX_CODE = "join southern-up";
-const WA_LINK = `https://wa.me/${TWILIO_SANDBOX_NUMBER}?text=${encodeURIComponent(SANDBOX_CODE)}`;
+const WA_LINK = `https://wa.me/${TWILIO_SANDBOX_NUMBER}?text=${encodeURIComponent("Hi")}`;
 const QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(WA_LINK)}`;
 
 const STEPS = [
@@ -79,9 +78,11 @@ export default function Home() {
             Open WhatsApp
           </div>
         </a>
-        <p className="text-zinc-600 text-xs text-center mt-3">
-          or text <span className="text-zinc-400 font-mono">join southern-up</span> to <span className="text-zinc-400 font-mono">+1 415 523 8886</span>
-        </p>
+        <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl px-4 py-3 mt-3">
+          <p className="text-zinc-500 text-xs text-center">
+            First time? Text <span className="text-blue-400 font-mono">join southern-up</span> to <span className="text-zinc-300 font-mono">+1 415 523 8886</span> on WhatsApp first, then scan the QR code.
+          </p>
+        </div>
       </div>
 
       {/* How it works */}
