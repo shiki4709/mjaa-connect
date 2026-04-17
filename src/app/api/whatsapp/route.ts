@@ -272,6 +272,17 @@ export async function POST(req: Request) {
 
     const phoneNumber = extractPhoneNumber(from);
 
+    // Intercept Twilio sandbox join messages — greet immediately
+    const lowerBody = body.toLowerCase().trim();
+    if (lowerBody === "join southern-up" || lowerBody.startsWith("join ")) {
+      const greeting =
+        "Hey! Welcome to MJAA Connect — I'm your AI matchmaker for the MJAA community. I'll connect you with the right people based on what you need. Let's start — what's your name?";
+      const convo = newConversation();
+      convo.messages.push({ role: "assistant", content: greeting });
+      await setConversation(phoneNumber, convo);
+      return twimlResponse(greeting);
+    }
+
     // Get or create conversation state
     const convo = (await getConversation(phoneNumber)) ?? newConversation();
 
