@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import members from "@/data/members.json";
@@ -37,23 +38,22 @@ async function sendIntroEmail(
   userRole: string,
   match: PendingMatch
 ): Promise<void> {
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) {
-    console.log("INTRO EMAIL (no API key):", { matchName: match.name, userName });
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+
+  if (!gmailUser || !gmailPass) {
+    console.log("INTRO EMAIL (no Gmail credentials):", { matchName: match.name, userName });
     return;
   }
 
-  // Send to the user's email (matched person's email added when domain is verified)
   if (!userEmail) {
     console.log("INTRO EMAIL (no user email):", { matchName: match.name, userName });
     return;
   }
 
-  const recipients: string[] = [userEmail];
-  // Only CC the matched person if we have a verified domain (not onboarding@resend.dev)
-  // For now, just send to the user with the matched person's info
+  const to = match.email ? `${userEmail}, ${match.email}` : userEmail;
 
-  // Generate personalized intro using Claude — specific context about both people
+  // Generate personalized intro using Claude
   const introResult = await generateText({
     model: anthropic("claude-haiku-4-5-20251001"),
     system: `Write a short intro email connecting two people. Be specific about WHY they should connect — reference what each person does and how it's relevant to the other. 2-3 sentences max. No greeting or sign-off, just the connecting paragraph. Be warm but concrete.`,
@@ -70,25 +70,21 @@ Match reasons: ${match.bullets?.join("; ") || "shared professional interests"}`,
 
   const introBody = introResult.text.trim();
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "MJAA Connect <onboarding@resend.dev>",
-      to: recipients,
-      subject: `MJAA Connect Intro: ${userName} + ${match.name}`,
-      text: `Hi ${userName} and ${match.name},\n\n${introBody}\n\nI'll leave it to you both to find a time to connect, and I'd love to hear how it goes!\n\nCheers,\nMJAA Connect`,
-    }),
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: gmailUser, pass: gmailPass },
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    console.error("Resend email failed:", res.status, err);
-  } else {
-    console.log("INTRO EMAIL sent to:", recipients);
+  try {
+    await transporter.sendMail({
+      from: `MJAA Connect <${gmailUser}>`,
+      to,
+      subject: `MJAA Connect Intro: ${userName} + ${match.name}`,
+      text: `Hi ${userName} and ${match.name},\n\n${introBody}\n\nI'll leave it to you both to find a time to connect, and I'd love to hear how it goes!\n\nCheers,\nMJAA Connect`,
+    });
+    console.log("INTRO EMAIL sent to:", to);
+  } catch (err) {
+    console.error("Gmail send failed:", err);
   }
 }
 

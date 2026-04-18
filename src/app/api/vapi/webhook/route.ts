@@ -48,8 +48,12 @@ export async function POST(req: Request) {
 
     console.log("VAPI END-OF-CALL:", { customerNumber, hasTranscript: !!transcript, transcriptLength: transcript?.length });
 
-    if (!customerNumber || !transcript || transcript.length < 100) {
-      console.log("VAPI: Skipping — no real transcript", { customerNumber, transcriptLength: transcript?.length });
+    // Skip if no real conversation happened (spam filter, voicemail, etc.)
+    const isSpam = !transcript || transcript.length < 100 ||
+      /spam|consumer network protection|voicemail|not available/i.test(transcript);
+
+    if (!customerNumber || isSpam) {
+      console.log("VAPI: Skipping — no real transcript or spam", { customerNumber, transcriptLength: transcript?.length });
       return Response.json({ received: true });
     }
 
@@ -158,11 +162,8 @@ ${memberContext}`,
         .trim();
       matches = JSON.parse(cleaned);
     } catch {
-      // Fallback: send raw text if JSON parsing fails, truncated to fit
-      const fallback = matchResult.text.length > 1500
-        ? matchResult.text.slice(0, 1497) + "..."
-        : matchResult.text;
-      await sendWhatsAppMessage(customerNumber, fallback);
+      console.error("VAPI: Failed to parse matches JSON:", matchResult.text.slice(0, 200));
+      // Don't send raw error text to user — just skip silently
       return Response.json({ received: true });
     }
 
