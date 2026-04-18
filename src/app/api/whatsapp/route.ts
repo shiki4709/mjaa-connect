@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import members from "@/data/members.json";
@@ -437,14 +438,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // For all other messages: return empty TwiML immediately to avoid Twilio timeout,
-    // then process in background and send response via REST API.
-    // Use waitUntil pattern for Vercel serverless.
-    const bgPromise = processMessageInBackground(phoneNumber, body, convo);
-
-    // On Vercel, the function stays alive briefly after returning.
-    // We return immediately and let the background work finish.
-    bgPromise.catch((err) => console.error("Background error:", err));
+    // Return empty TwiML immediately to avoid Twilio's 15s timeout.
+    // Use next/server's after() to keep the function alive for background work.
+    after(async () => {
+      await processMessageInBackground(phoneNumber, body, convo);
+    });
 
     return emptyTwiml();
   } catch (error) {
