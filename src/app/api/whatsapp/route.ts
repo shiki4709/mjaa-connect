@@ -423,7 +423,7 @@ export async function POST(req: Request) {
 
           if (currentMatch.email) {
             // Fire and forget — don't block TwiML response
-            sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch);
+            await sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch);
           }
         }
 
