@@ -31,7 +31,6 @@ Reply *accept* to connect or *skip* to see the next match (${index}/${total})`;
   return msg.length > 1500 ? msg.slice(0, 1497) + "..." : msg;
 }
 
-// Send intro email via Resend (or log if not configured)
 async function sendIntroEmail(
   userName: string,
   userRole: string,
@@ -39,11 +38,7 @@ async function sendIntroEmail(
 ): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey || !match.email) {
-    console.log("INTRO EMAIL (not sent - no API key or email):", {
-      to: match.email,
-      matchName: match.name,
-      userName,
-    });
+    console.log("INTRO EMAIL (not sent):", { to: match.email, matchName: match.name, userName });
     return;
   }
 
@@ -81,81 +76,9 @@ function extractLinkedInUrl(text: string): string | null {
   return match ? match[0] : null;
 }
 
-async function scrapeLinkedInProfile(
-  url: string
-): Promise<{
-  name?: string;
-  role?: string;
-  company?: string;
-  headline?: string;
-  summary?: string;
-  experiences?: Array<{ title: string; company: string; description?: string }>;
-  skills?: string[];
-} | null> {
-  const apiToken = process.env.APIFY_API_TOKEN;
-  if (!apiToken) return null;
-
-  try {
-    const runRes = await fetch(
-      `https://api.apify.com/v2/acts/dev_fusion~Linkedin-Profile-Scraper/runs?token=${apiToken}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileUrls: [url] }),
-      }
-    );
-    const runData = await runRes.json();
-    const runId = runData?.data?.id;
-    if (!runId) return null;
-
-    const deadline = Date.now() + 30000;
-    let status = "";
-    while (Date.now() < deadline) {
-      const statusRes = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`
-      );
-      const statusData = await statusRes.json();
-      status = statusData?.data?.status;
-      if (status === "SUCCEEDED") break;
-      if (status === "FAILED" || status === "ABORTED") return null;
-      await new Promise((r) => setTimeout(r, 2000));
-    }
-    if (status !== "SUCCEEDED") return null;
-
-    const datasetId = runData?.data?.defaultDatasetId;
-    const itemsRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?token=${apiToken}`
-    );
-    const items = await itemsRes.json();
-
-    if (!Array.isArray(items) || items.length === 0) return null;
-
-    const profile = items[0] as Record<string, unknown>;
-    return {
-      name: profile.fullName as string | undefined,
-      role: profile.title as string | undefined,
-      company: profile.company as string | undefined,
-      headline: profile.headline as string | undefined,
-      summary: profile.summary as string | undefined,
-      experiences: (
-        profile.experiences as Array<{
-          title: string;
-          company: string;
-          description?: string;
-        }>
-      )?.slice(0, 5),
-      skills: (profile.skills as string[])?.slice(0, 10),
-    };
-  } catch (error) {
-    console.error("LinkedIn scrape error:", error);
-    return null;
-  }
-}
-
 function getSystemPrompt(convo: ConversationState) {
   const { profile } = convo;
 
-  // If voice onboarding completed, skip to matching
   const voiceContext = convo.vapiCallComplete
     ? `\n\n## IMPORTANT: Voice onboarding already completed!
 The user just finished a voice call with you. Their profile is filled in below.
@@ -171,31 +94,24 @@ Do NOT re-ask onboarding questions. Instead:
 ## CRITICAL: Keep every message SHORT.
 - Max 2-3 sentences per message. This is WhatsApp, not email.
 - Ask ONE question at a time. Never list multiple options or bullet points.
-- Never give a menu of choices like "Are you looking for A, B, C, or D?" — just ask the open-ended question and let them answer.
 - No markdown formatting. Use *bold* only for names.
-- React briefly to what they said, then ask the next thing. That's it.
+- React briefly to what they said, then ask the next thing.
 
 ## Onboarding (one question per message):
 1. The first message already asked their name. When they reply with their name, ask for their LinkedIn profile and email: "Nice to meet you [name]! Drop me your LinkedIn URL and email so I can connect you properly."
 2. After they share LinkedIn/email (or say they don't have one), IMMEDIATELY offer to call: "Perfect! Let me give you a quick call — 2 minutes and I'll find you the perfect connections. Sound good?"
-3. If they say YES to the call (any affirmative like "yes", "sure", "ok", "yeah", "go for it"), respond with EXACTLY this text and nothing else: [TRIGGER_VOICE_CALL]
+3. If they say YES to the call, respond with EXACTLY this text and nothing else: [TRIGGER_VOICE_CALL]
 4. ONLY if they explicitly say NO to the call, continue with text onboarding:
    a. Ask what they do
    b. Ask their superpower and what they can offer others
    c. "What are you looking for right now?" — this starts matching
 5. ALWAYS push for the call. If they seem hesitant, reassure them it's just 2 minutes.
-6. If a message contains a LinkedIn URL, acknowledge it. If it contains an email address, acknowledge it. Both can come in the same message or separate.
-
-## Extracting LinkedIn/email:
-- If you see a LinkedIn URL in their message, it will be automatically extracted by the system.
-- If you see an email address, note it — the system will extract it.
 ${voiceContext}
 
 ## Matching:
 When they say what they need, respond with [MATCHES_NEEDED] followed by what they're looking for.
 Example: "[MATCHES_NEEDED] looking for a job in AI/ML engineering"
-Do NOT try to list matches yourself. Do NOT say "one sec" or "let me find". Just output the tag.
-The system will generate and send matches automatically.
+Do NOT try to list matches yourself. Just output the tag.
 
 ## Current user info:
 ${profile.name ? `Name: ${profile.name}` : "Name: not yet provided"}
@@ -207,12 +123,9 @@ ${profile.canOffer ? `Can offer: ${profile.canOffer}` : "Can offer: not yet prov
 ${profile.linkedinUrl ? `LinkedIn: ${profile.linkedinUrl}` : ""}
 
 ## Rules:
-- EVERY message must be short. 2-3 sentences max during onboarding. No walls of text.
+- EVERY message must be short. 2-3 sentences max during onboarding.
 - ONE question per message. Never combine questions.
-- Never list options. Ask open-ended and let them answer.
 - Only suggest matches from the directory below. Never invent members.
-- Be honest if no one matches well.
-- Matching messages can be longer (names + intros), but still concise.
 
 ## MJAA/MJW Member Directory:
 ${memberContext}`;
@@ -221,6 +134,12 @@ ${memberContext}`;
 function twimlResponse(message: string): Response {
   const xml = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapeXml(message)}</Message></Response>`;
   return new Response(xml, {
+    headers: { "Content-Type": "text/xml" },
+  });
+}
+
+function emptyTwiml(): Response {
+  return new Response("<Response></Response>", {
     headers: { "Content-Type": "text/xml" },
   });
 }
@@ -234,7 +153,6 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
-// Strip "whatsapp:" prefix to get raw phone number for Vapi
 function extractPhoneNumber(twilioFrom: string): string {
   return twilioFrom.replace("whatsapp:", "");
 }
@@ -284,7 +202,6 @@ You're calling ${userName} to get to know them for matching with other community
 - Keep it SHORT. React briefly to what they say, then move on
 - Don't repeat back everything they said — just acknowledge and ask the next thing
 - If they go off topic, gently guide back
-- The closing matters — make them EXCITED to check WhatsApp for their matches
 - Total call should be under 2 minutes`,
             },
           ],
@@ -310,125 +227,23 @@ You're calling ${userName} to get to know them for matching with other community
   return callData.id ?? null;
 }
 
-export async function POST(req: Request) {
+// Process message in background — generates AI response and sends via REST API
+// This runs AFTER we've already returned TwiML to Twilio, so no timeout risk.
+async function processMessageInBackground(
+  phoneNumber: string,
+  body: string,
+  convo: ConversationState
+): Promise<void> {
   try {
-    const text = await req.text();
-    const params = new URLSearchParams(text);
-    const body = params.get("Body");
-    const from = params.get("From");
-
-    if (!body || !from) {
-      return twimlResponse(
-        "Sorry, something went wrong. Please try sending your message again."
-      );
-    }
-
-    const phoneNumber = extractPhoneNumber(from);
-
-    // Debug: log every incoming message
-    console.log("WHATSAPP INCOMING:", { body, from, phoneNumber });
-
-    const lowerBody = body.toLowerCase().trim();
-
-    // "join" messages: Twilio may or may not forward these.
-    // Either way, wipe state and return empty TwiML.
-    if (lowerBody.startsWith("join ")) {
-      await setConversation(phoneNumber, newConversation());
-      return new Response("<Response></Response>", {
-        headers: { "Content-Type": "text/xml" },
-      });
-    }
-
-    // For ANY message: if no conversation exists OR conversation has
-    // no assistant messages yet, this is a fresh user — ask their name.
-    const existing = await getConversation(phoneNumber);
-    const isNewUser = !existing || existing.messages.length === 0;
-
-    if (isNewUser) {
-      const greeting =
-        "Hey! Welcome to MJAA Connect — I'm your AI matchmaker for the MJAA community. I'll connect you with the right people based on what you need. What's your name?";
-      const convo = newConversation();
-      convo.messages.push({ role: "user", content: body });
-      convo.messages.push({ role: "assistant", content: greeting });
-      await setConversation(phoneNumber, convo);
-      return twimlResponse(greeting);
-    }
-
-    const convo = existing;
-
-    // Handle accept/skip for pending matches
-    if (convo.pendingMatches && convo.pendingMatches.length > 0 && convo.currentMatchIndex !== undefined) {
-      const isAccept = /^(accept|yes|connect|y)$/i.test(lowerBody);
-      const isSkip = /^(skip|next|no|n|pass)$/i.test(lowerBody);
-
-      if (isAccept || isSkip) {
-        const currentMatch = convo.pendingMatches[convo.currentMatchIndex];
-
-        if (isAccept && currentMatch) {
-          // Store accepted match
-          if (!convo.acceptedMatches) convo.acceptedMatches = [];
-          convo.acceptedMatches.push(currentMatch);
-
-          // Send intro email to both parties
-          if (currentMatch.email) {
-            await sendIntroEmail(
-              convo.profile.name || "MJAA Member",
-              convo.profile.role || "",
-              currentMatch
-            );
-          }
-
-          await sendWhatsAppMessage(
-            phoneNumber,
-            `Great choice! I've sent an intro email to *${currentMatch.name}* connecting you two.`
-          );
-        }
-
-        // Move to next match
-        convo.currentMatchIndex++;
-
-        if (convo.currentMatchIndex < convo.pendingMatches.length) {
-          const nextMatch = convo.pendingMatches[convo.currentMatchIndex];
-          const msg = formatMatchCard(
-            nextMatch,
-            convo.currentMatchIndex + 1,
-            convo.pendingMatches.length
-          );
-          await setConversation(phoneNumber, convo);
-          // Send next match via REST API, return empty TwiML
-          await sendWhatsAppMessage(phoneNumber, msg);
-          return new Response("<Response></Response>", {
-            headers: { "Content-Type": "text/xml" },
-          });
-        } else {
-          // All matches reviewed
-          convo.pendingMatches = undefined;
-          convo.currentMatchIndex = undefined;
-          const accepted = convo.acceptedMatches?.length || 0;
-          await setConversation(phoneNumber, convo);
-          const doneMsg = accepted > 0
-            ? `That's all your matches! I sent ${accepted} intro${accepted > 1 ? "s" : ""}. Text me anytime you want more connections.`
-            : `That's all your matches! Text me anytime you want to try again with different criteria.`;
-          return twimlResponse(doneMsg);
-        }
-      }
-    }
-
-    // Extract email if present
+    // Extract email/linkedin from message
     const email = extractEmail(body);
-    if (email) {
-      convo.profile.email = email;
-    }
+    if (email) convo.profile.email = email;
 
-    // Save LinkedIn URL if present (scraping disabled — Apify free plan blocks API calls)
     const linkedinUrl = extractLinkedInUrl(body);
-    if (linkedinUrl) {
-      convo.profile.linkedinUrl = linkedinUrl;
-    }
+    if (linkedinUrl) convo.profile.linkedinUrl = linkedinUrl;
 
     convo.messages.push({ role: "user", content: body });
 
-    // Keep conversation history manageable
     if (convo.messages.length > 20) {
       convo.messages = convo.messages.slice(-20);
     }
@@ -442,67 +257,33 @@ export async function POST(req: Request) {
 
     let aiResponse = result.text;
 
-    // Check if the AI wants to trigger a voice call
-    // Detect call trigger — AI should output [TRIGGER_VOICE_CALL] but sometimes
-    // improvises. Catch all variations.
-    const wantsCall = aiResponse.includes("[TRIGGER_VOICE_CALL]") ||
-      /call(ing)? you/i.test(aiResponse) ||
-      /let me call/i.test(aiResponse) ||
-      /pick up/i.test(aiResponse) ||
-      /give you a call/i.test(aiResponse) ||
-      /ring(ing)? you/i.test(aiResponse);
-
-    console.log("AI RESPONSE:", aiResponse, "WANTS_CALL:", wantsCall);
-
-    if (wantsCall) {
-      console.log("TRIGGERING VAPI CALL to:", phoneNumber);
-      const callId = await triggerVapiCall(
-        phoneNumber,
-        convo.profile.name || "there"
-      );
-      console.log("VAPI CALL RESULT:", callId);
+    // Only trigger call on exact tag — no fuzzy matching
+    if (aiResponse.includes("[TRIGGER_VOICE_CALL]")) {
+      const callId = await triggerVapiCall(phoneNumber, convo.profile.name || "there");
 
       if (callId) {
         convo.vapiCallId = callId;
-        aiResponse =
-          "Calling you now! Pick up the phone — I'll ask you a few quick questions and then send your matches right here on WhatsApp.";
+        aiResponse = "Calling you now! Pick up the phone — I'll ask you a few quick questions and then send your matches right here on WhatsApp.";
       } else {
-        aiResponse =
-          "Hmm, I couldn't start the call right now. Let's keep going here instead! What do you do?";
+        aiResponse = "Hmm, I couldn't start the call right now. Let's keep going here instead! What do you do?";
       }
     }
 
-    // Check if the AI wants to trigger matching
+    // Handle matching
     if (aiResponse.includes("[MATCHES_NEEDED]")) {
       const lookingFor = aiResponse.replace("[MATCHES_NEEDED]", "").trim() || body;
-      aiResponse = `On it! Finding the best people in our community for you...`;
-
-      // Save state before async match generation
-      convo.messages.push({ role: "assistant", content: aiResponse });
       convo.profile.lookingFor = lookingFor;
-      await setConversation(phoneNumber, convo);
 
-      // Generate matches via Claude
+      await sendWhatsAppMessage(phoneNumber, "On it! Finding the best people in our community for you...");
+
       const matchResult = await generateText({
         model: anthropic("claude-haiku-4-5-20251001"),
-        system: `You are MJAA Connect, matching community members. Given a user's profile, find 2-3 best matches from the directory.
+        system: `You are MJAA Connect, matching community members. Find 2-3 best matches.
 
-Return ONLY valid JSON — an array of match objects:
-[
-  {
-    "name": "Full Name",
-    "roleCompany": "Role at Company",
-    "bullets": [
-      "One sentence: specific reason this person is relevant",
-      "One sentence: how their background connects to user's needs",
-      "One sentence: what they can offer that directly helps"
-    ],
-    "drawback": "One honest caveat (or null)",
-    "introMessage": "2-3 sentence copy-paste intro showing value for BOTH sides."
-  }
-]
+Return ONLY valid JSON array:
+[{"name":"Full Name","roleCompany":"Role at Company","bullets":["reason 1","reason 2","reason 3"],"drawback":"caveat or null"}]
 
-TOTAL per match must be UNDER 1500 characters. Be specific but concise.
+MAX 3 bullets per match, each under 100 chars. Keep it SHORT.
 
 ## Member Directory:
 ${memberContext}`,
@@ -512,15 +293,11 @@ ${memberContext}`,
             content: `Find matches for:
 Name: ${convo.profile.name || "unknown"}
 Role: ${convo.profile.role || "not specified"}
-Background: ${convo.profile.background || "not specified"}
-Strength: ${convo.profile.strength || "not specified"}
-Looking for: ${lookingFor}
-Can offer: ${convo.profile.canOffer || "not specified"}`,
+Looking for: ${lookingFor}`,
           },
         ],
       });
 
-      // Parse matches and start accept/skip flow
       try {
         const cleaned = matchResult.text
           .replace(/^```(?:json)?\s*/i, "")
@@ -531,25 +308,19 @@ Can offer: ${convo.profile.canOffer || "not specified"}`,
           roleCompany: string;
           bullets: string[];
           drawback: string | null;
-          introMessage: string;
         }>;
 
-        // Enrich with linkedin/email and store as pending
         const enriched: PendingMatch[] = rawMatches.map((match) => {
           const member = findMember(match.name);
-          return {
-            ...match,
-            linkedin: member?.linkedin ?? null,
-            email: member?.email ?? null,
-          };
+          return { ...match, linkedin: member?.linkedin ?? null, email: member?.email ?? null };
         });
 
         convo.pendingMatches = enriched;
         convo.currentMatchIndex = 0;
         convo.acceptedMatches = [];
+        convo.messages.push({ role: "assistant", content: "Here are your matches:" });
         await setConversation(phoneNumber, convo);
 
-        // Send first match only
         const msg = formatMatchCard(enriched[0], 1, enriched.length);
         await sendWhatsAppMessage(phoneNumber, msg);
       } catch {
@@ -558,41 +329,126 @@ Can offer: ${convo.profile.canOffer || "not specified"}`,
           : matchResult.text;
         await sendWhatsAppMessage(phoneNumber, fallback);
       }
-
-      return twimlResponse(aiResponse);
+      return;
     }
 
+    // Normal response — send via REST API
     convo.messages.push({ role: "assistant", content: aiResponse });
 
-    // Try to extract name from conversation if not yet known
+    // Simple name extraction from early messages
     if (!convo.profile.name && convo.messages.length >= 2) {
-      const extractResult = await generateText({
-        model: anthropic("claude-haiku-4-5-20251001"),
-        system:
-          'Extract the user\'s name from this conversation if they\'ve shared it. Return ONLY the name, or "UNKNOWN" if not found. No other text.',
-        messages: [
-          {
-            role: "user",
-            content: convo.messages
-              .map((m) => `${m.role}: ${m.content}`)
-              .join("\n"),
-          },
-        ],
-      });
-      const name = extractResult.text.trim();
-      if (name !== "UNKNOWN") {
-        convo.profile.name = name;
+      const userMsgs = convo.messages.filter((m) => m.role === "user");
+      if (userMsgs.length >= 1) {
+        const firstReply = userMsgs[0].content.trim();
+        // If the first user message is short (likely a name), use it
+        if (firstReply.length < 30 && !firstReply.includes(" ") || firstReply.split(" ").length <= 3) {
+          convo.profile.name = firstReply;
+        }
       }
     }
 
-    // Persist conversation state to Redis
     await setConversation(phoneNumber, convo);
+    await sendWhatsAppMessage(phoneNumber, aiResponse);
+  } catch (error) {
+    console.error("Background processing error:", error);
+    await sendWhatsAppMessage(phoneNumber, "Oops, I hit a snag. Please try again!");
+  }
+}
 
-    return twimlResponse(aiResponse);
+export async function POST(req: Request) {
+  try {
+    const text = await req.text();
+    const params = new URLSearchParams(text);
+    const body = params.get("Body");
+    const from = params.get("From");
+
+    if (!body || !from) {
+      return twimlResponse("Sorry, something went wrong. Please try sending your message again.");
+    }
+
+    const phoneNumber = extractPhoneNumber(from);
+    console.log("WHATSAPP INCOMING:", { body, from: phoneNumber });
+
+    const lowerBody = body.toLowerCase().trim();
+
+    // "join" messages — wipe state, return immediately
+    if (lowerBody.startsWith("join ")) {
+      await setConversation(phoneNumber, newConversation());
+      return emptyTwiml();
+    }
+
+    // New user — return greeting via TwiML (fast, no LLM call)
+    const existing = await getConversation(phoneNumber);
+    const isNewUser = !existing || existing.messages.length === 0;
+
+    if (isNewUser) {
+      const greeting = "Hey! Welcome to MJAA Connect — I'm your AI matchmaker for the MJAA community. I'll connect you with the right people based on what you need. What's your name?";
+      const convo = newConversation();
+      convo.messages.push({ role: "user", content: body });
+      convo.messages.push({ role: "assistant", content: greeting });
+      await setConversation(phoneNumber, convo);
+      return twimlResponse(greeting);
+    }
+
+    const convo = existing;
+
+    // Handle accept/skip for pending matches — fast, no LLM call
+    if (convo.pendingMatches && convo.pendingMatches.length > 0 && convo.currentMatchIndex !== undefined) {
+      const isAccept = /^(accept|yes|connect|y)$/i.test(lowerBody);
+      const isSkip = /^(skip|next|no|n|pass)$/i.test(lowerBody);
+
+      if (isAccept || isSkip) {
+        const currentMatch = convo.pendingMatches[convo.currentMatchIndex];
+
+        if (isAccept && currentMatch) {
+          if (!convo.acceptedMatches) convo.acceptedMatches = [];
+          convo.acceptedMatches.push(currentMatch);
+
+          if (currentMatch.email) {
+            // Fire and forget — don't block TwiML response
+            sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.role || "", currentMatch);
+          }
+        }
+
+        convo.currentMatchIndex++;
+
+        if (convo.currentMatchIndex < convo.pendingMatches.length) {
+          const nextMatch = convo.pendingMatches[convo.currentMatchIndex];
+          const msg = formatMatchCard(nextMatch, convo.currentMatchIndex + 1, convo.pendingMatches.length);
+          await setConversation(phoneNumber, convo);
+
+          // Fire and forget — send next match in background
+          sendWhatsAppMessage(phoneNumber, msg);
+
+          const ack = isAccept
+            ? `Great choice! I've sent an intro to *${currentMatch.name}*. Here's your next match...`
+            : "Got it, here's the next one...";
+          return twimlResponse(ack);
+        } else {
+          convo.pendingMatches = undefined;
+          convo.currentMatchIndex = undefined;
+          const accepted = convo.acceptedMatches?.length || 0;
+          await setConversation(phoneNumber, convo);
+          const doneMsg = accepted > 0
+            ? `That's all your matches! I sent ${accepted} intro${accepted > 1 ? "s" : ""}. Text me anytime you want more connections.`
+            : `That's all your matches! Text me anytime you want to try again with different criteria.`;
+          return twimlResponse(doneMsg);
+        }
+      }
+    }
+
+    // For all other messages: return empty TwiML immediately to avoid Twilio timeout,
+    // then process in background and send response via REST API.
+    // Use waitUntil pattern for Vercel serverless.
+    const bgPromise = processMessageInBackground(phoneNumber, body, convo);
+
+    // On Vercel, the function stays alive briefly after returning.
+    // We return immediately and let the background work finish.
+    bgPromise.catch((err) => console.error("Background error:", err));
+
+    return emptyTwiml();
   } catch (error) {
     console.error("WhatsApp webhook error:", error);
-    return twimlResponse(
-      "Oops, I hit a snag. Please try again in a moment!"
-    );
+    return twimlResponse("Oops, I hit a snag. Please try again in a moment!");
   }
 }
