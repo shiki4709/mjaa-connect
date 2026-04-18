@@ -43,15 +43,15 @@ async function sendIntroEmail(
     return;
   }
 
-  // Build recipient list — both the user and the matched person
-  const recipients: string[] = [];
-  if (userEmail) recipients.push(userEmail);
-  if (match.email) recipients.push(match.email);
-
-  if (recipients.length === 0) {
-    console.log("INTRO EMAIL (no emails):", { matchName: match.name, userName });
+  // Send to the user's email (matched person's email added when domain is verified)
+  if (!userEmail) {
+    console.log("INTRO EMAIL (no user email):", { matchName: match.name, userName });
     return;
   }
+
+  const recipients: string[] = [userEmail];
+  // Only CC the matched person if we have a verified domain (not onboarding@resend.dev)
+  // For now, just send to the user with the matched person's info
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
