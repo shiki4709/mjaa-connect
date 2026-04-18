@@ -420,46 +420,13 @@ export async function POST(req: Request) {
       convo.profile.email = email;
     }
 
-    // Check if message contains a LinkedIn URL
+    // Save LinkedIn URL if present (scraping disabled — Apify free plan blocks API calls)
     const linkedinUrl = extractLinkedInUrl(body);
-    if (linkedinUrl && !convo.linkedinLoaded) {
+    if (linkedinUrl) {
       convo.profile.linkedinUrl = linkedinUrl;
-
-      const linkedinData = await scrapeLinkedInProfile(linkedinUrl);
-      if (linkedinData) {
-        convo.linkedinLoaded = true;
-        if (linkedinData.name) convo.profile.name = linkedinData.name;
-        if (linkedinData.headline || linkedinData.role) {
-          convo.profile.role = linkedinData.headline || linkedinData.role;
-        }
-
-        const bgParts: string[] = [];
-        if (linkedinData.summary) bgParts.push(linkedinData.summary);
-        if (linkedinData.experiences) {
-          const expSummary = linkedinData.experiences
-            .map((e) => `${e.title} at ${e.company}`)
-            .join(", ");
-          bgParts.push(`Experience: ${expSummary}`);
-        }
-        if (linkedinData.skills) {
-          bgParts.push(`Skills: ${linkedinData.skills.join(", ")}`);
-        }
-        if (bgParts.length > 0) {
-          convo.profile.background = bgParts.join(". ");
-        }
-
-        convo.messages.push({ role: "user", content: body });
-        convo.messages.push({
-          role: "assistant",
-          content: `[SYSTEM: LinkedIn profile loaded for ${linkedinData.name || "user"}. Role: ${linkedinData.headline || linkedinData.role || "unknown"}. ${convo.profile.background || ""}. Now summarize this back to the user warmly and ask for confirmation.]`,
-        });
-        convo.messages.pop();
-      } else {
-        convo.messages.push({ role: "user", content: body });
-      }
-    } else {
-      convo.messages.push({ role: "user", content: body });
     }
+
+    convo.messages.push({ role: "user", content: body });
 
     // Keep conversation history manageable
     if (convo.messages.length > 20) {
