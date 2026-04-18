@@ -69,6 +69,11 @@ const memberContext = members
   )
   .join("\n\n");
 
+function extractEmail(text: string): string | null {
+  const match = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  return match ? match[0] : null;
+}
+
 function extractLinkedInUrl(text: string): string | null {
   const match = text.match(
     /https?:\/\/(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?/
@@ -171,14 +176,19 @@ Do NOT re-ask onboarding questions. Instead:
 - React briefly to what they said, then ask the next thing. That's it.
 
 ## Onboarding (one question per message):
-1. The first message already asked their name. When they reply with their name, IMMEDIATELY offer to call them. Say something like: "Nice to meet you [name]! Let me give you a quick call — 2 minutes and I'll find you the perfect connections. Sound good?"
-2. If they say YES to the call (any affirmative like "yes", "sure", "ok", "yeah", "go for it"), respond with EXACTLY this text and nothing else: [TRIGGER_VOICE_CALL]
-3. ONLY if they explicitly say NO to the call, continue with text onboarding:
+1. The first message already asked their name. When they reply with their name, ask for their LinkedIn profile and email: "Nice to meet you [name]! Drop me your LinkedIn URL and email so I can connect you properly."
+2. After they share LinkedIn/email (or say they don't have one), IMMEDIATELY offer to call: "Perfect! Let me give you a quick call — 2 minutes and I'll find you the perfect connections. Sound good?"
+3. If they say YES to the call (any affirmative like "yes", "sure", "ok", "yeah", "go for it"), respond with EXACTLY this text and nothing else: [TRIGGER_VOICE_CALL]
+4. ONLY if they explicitly say NO to the call, continue with text onboarding:
    a. Ask what they do
-   b. Ask their biggest strength — "What's your superpower? The thing people come to you for?"
-   c. Ask what they can offer others in the network
-   d. "What are you looking for right now?" — this starts matching
-4. ALWAYS push for the call. If they seem hesitant, reassure them it's just 2 minutes and way easier than typing.
+   b. Ask their superpower and what they can offer others
+   c. "What are you looking for right now?" — this starts matching
+5. ALWAYS push for the call. If they seem hesitant, reassure them it's just 2 minutes.
+6. If a message contains a LinkedIn URL, acknowledge it. If it contains an email address, acknowledge it. Both can come in the same message or separate.
+
+## Extracting LinkedIn/email:
+- If you see a LinkedIn URL in their message, it will be automatically extracted by the system.
+- If you see an email address, note it — the system will extract it.
 ${voiceContext}
 
 ## Matching:
@@ -265,8 +275,9 @@ You're calling ${userName} to get to know them for matching with other community
 2. Ask what they do — their role and what their work is about
 3. Ask what their superpower is and what they can offer others — "What's the thing people always come to you for? What would you bring to someone in our community?"
 4. Ask what they're looking for — "What would be most helpful for you right now? Could be mentorship, funding, partnerships, hiring — anything."
-5. After they answer, wrap up: "Love it. I'll send you a few matches on WhatsApp in just a moment. Great chatting with you ${userName}!"
-6. End the call.
+5. After they answer, ask for their email — "Last thing — what's your email? I'll send intros there when I match you with someone."
+6. After they give their email (or say they don't want to), wrap up: "Love it. I'll send you a few matches on WhatsApp in just a moment. Great chatting with you ${userName}!"
+7. End the call.
 
 ## Rules:
 - Be conversational, warm, and natural — like a friend, not a survey
@@ -401,6 +412,12 @@ export async function POST(req: Request) {
           return twimlResponse(doneMsg);
         }
       }
+    }
+
+    // Extract email if present
+    const email = extractEmail(body);
+    if (email) {
+      convo.profile.email = email;
     }
 
     // Check if message contains a LinkedIn URL

@@ -12,6 +12,7 @@ export interface UserProfile {
   lookingFor?: string;
   canOffer?: string;
   linkedinUrl?: string;
+  email?: string;
 }
 
 export interface PendingMatch {

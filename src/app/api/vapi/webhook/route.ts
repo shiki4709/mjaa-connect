@@ -64,7 +64,8 @@ Return ONLY valid JSON with these fields (use null for anything not mentioned):
   "background": "string or null - brief summary of their experience",
   "strength": "string or null - their superpower or what people come to them for",
   "lookingFor": "string or null - what they need from the network",
-  "canOffer": "string or null - what they can offer others"
+  "canOffer": "string or null - what they can offer others",
+  "email": "string or null - their email address if they shared it"
 }`,
       messages: [{ role: "user", content: transcript }],
     });
@@ -88,6 +89,8 @@ Return ONLY valid JSON with these fields (use null for anything not mentioned):
       convo.profile.lookingFor = extractedProfile.lookingFor;
     if (extractedProfile.canOffer)
       convo.profile.canOffer = extractedProfile.canOffer;
+    if (extractedProfile.email)
+      convo.profile.email = extractedProfile.email;
     convo.vapiCallComplete = true;
     await setConversation(customerNumber, convo);
 
