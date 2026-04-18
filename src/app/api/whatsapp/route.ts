@@ -446,35 +446,38 @@ export async function POST(req: Request) {
         if (convo.currentMatchIndex < convo.pendingMatches.length) {
           const nextMatch = convo.pendingMatches[convo.currentMatchIndex];
           const msg = formatMatchCard(nextMatch, convo.currentMatchIndex + 1, convo.pendingMatches.length);
-          // Save state FIRST before any slow operations
           await setConversation(phoneNumber, convo);
 
-          // Send email and next match in background — don't block TwiML
-          if (isAccept && currentMatch) {
-            sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch).catch((e) => console.error("Email error:", e));
-          }
-          sendWhatsAppMessage(phoneNumber, msg).catch((e) => console.error("Send error:", e));
-
+          // Send ack, email, and next match — all via REST API, all awaited
           const ack = isAccept
             ? `Great choice! I've sent an intro to *${currentMatch.name}*. Here's your next match...`
             : "Got it, here's the next one...";
-          return twimlResponse(ack);
+          await sendWhatsAppMessage(phoneNumber, ack);
+
+          if (isAccept && currentMatch) {
+            await sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch);
+          }
+
+          await new Promise((r) => setTimeout(r, 1000));
+          await sendWhatsAppMessage(phoneNumber, msg);
+
+          return emptyTwiml();
         } else {
           convo.pendingMatches = undefined;
           convo.currentMatchIndex = undefined;
           const accepted = convo.acceptedMatches?.length || 0;
-          // Save state FIRST
           await setConversation(phoneNumber, convo);
 
-          // Send last email in background
           if (isAccept && currentMatch) {
-            sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch).catch((e) => console.error("Email error:", e));
+            await sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch);
           }
 
           const doneMsg = accepted > 0
             ? `That's all your matches! I sent ${accepted} intro${accepted > 1 ? "s" : ""}. Text me anytime you want more connections.`
             : `That's all your matches! Text me anytime you want to try again with different criteria.`;
-          return twimlResponse(doneMsg);
+          await sendWhatsAppMessage(phoneNumber, doneMsg);
+
+          return emptyTwiml();
         }
       }
     }
