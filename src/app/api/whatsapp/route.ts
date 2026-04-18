@@ -1,4 +1,3 @@
-import { after } from "next/server";
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import members from "@/data/members.json";
@@ -438,11 +437,10 @@ export async function POST(req: Request) {
       }
     }
 
-    // Return empty TwiML immediately to avoid Twilio's 15s timeout.
-    // Use next/server's after() to keep the function alive for background work.
-    after(async () => {
-      await processMessageInBackground(phoneNumber, body, convo);
-    });
+    // Process synchronously — send response via REST API.
+    // TwiML is not used for these messages, so Twilio timeout doesn't apply
+    // (we already returned for new-user and accept/skip paths via TwiML above).
+    await processMessageInBackground(phoneNumber, body, convo);
 
     return emptyTwiml();
   } catch (error) {
