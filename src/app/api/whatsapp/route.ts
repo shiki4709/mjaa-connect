@@ -33,16 +33,27 @@ Reply *accept* to connect or *skip* to see the next match (${index}/${total})`;
 
 async function sendIntroEmail(
   userName: string,
+  userEmail: string | undefined,
   userRole: string,
   match: PendingMatch
 ): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey || !match.email) {
-    console.log("INTRO EMAIL (not sent):", { to: match.email, matchName: match.name, userName });
+  if (!resendKey) {
+    console.log("INTRO EMAIL (no API key):", { matchName: match.name, userName });
     return;
   }
 
-  await fetch("https://api.resend.com/emails", {
+  // Build recipient list — both the user and the matched person
+  const recipients: string[] = [];
+  if (userEmail) recipients.push(userEmail);
+  if (match.email) recipients.push(match.email);
+
+  if (recipients.length === 0) {
+    console.log("INTRO EMAIL (no emails):", { matchName: match.name, userName });
+    return;
+  }
+
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${resendKey}`,
@@ -50,11 +61,18 @@ async function sendIntroEmail(
     },
     body: JSON.stringify({
       from: "MJAA Connect <onboarding@resend.dev>",
-      to: match.email,
-      subject: `MJAA Connect: Meet ${userName}`,
-      text: `Hi ${match.name},\n\n${userName}${userRole ? ` (${userRole})` : ""} from the MJAA community would love to connect with you.\n\nThey're interested in connecting because of your expertise in ${match.roleCompany}.\n\nWe'll let ${userName} follow up from here!\n\nBest,\nMJAA Connect`,
+      to: recipients,
+      subject: `MJAA Connect Intro: ${userName} + ${match.name}`,
+      text: `Hi ${userName} and ${match.name},\n\nExcited to connect you both!\n\n${userName}${userRole ? ` (${userRole})` : ""} is looking to connect with people in the MJAA community, and ${match.name} (${match.roleCompany}) is a great match.\n\nI'll leave it to you both to find a time to connect. Just reply-all to this email to get the conversation going!\n\nCheers,\nMJAA Connect`,
     }),
-  }).catch((err) => console.error("Resend email failed:", err));
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("Resend email failed:", res.status, err);
+  } else {
+    console.log("INTRO EMAIL sent to:", recipients);
+  }
 }
 
 const memberContext = members
@@ -406,7 +424,7 @@ export async function POST(req: Request) {
 
           if (currentMatch.email) {
             // Fire and forget — don't block TwiML response
-            sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.role || "", currentMatch);
+            sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch);
           }
         }
 
