@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import members from "@/data/members.json";
@@ -38,20 +37,11 @@ async function sendIntroEmail(
   userRole: string,
   match: PendingMatch
 ): Promise<void> {
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
-
-  if (!gmailUser || !gmailPass) {
-    console.log("INTRO EMAIL (no Gmail credentials):", { matchName: match.name, userName });
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey || !userEmail) {
+    console.log("INTRO EMAIL (missing key or email):", { matchName: match.name, userName, userEmail });
     return;
   }
-
-  if (!userEmail) {
-    console.log("INTRO EMAIL (no user email):", { matchName: match.name, userName });
-    return;
-  }
-
-  const to = match.email ? `${userEmail}, ${match.email}` : userEmail;
 
   // Generate personalized intro using Claude
   const introResult = await generateText({
@@ -70,21 +60,25 @@ Match reasons: ${match.bullets?.join("; ") || "shared professional interests"}`,
 
   const introBody = introResult.text.trim();
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: gmailUser, pass: gmailPass },
-  });
-
-  try {
-    await transporter.sendMail({
-      from: `MJAA Connect <${gmailUser}>`,
-      to,
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "MJAA Connect <onboarding@resend.dev>",
+      to: userEmail,
       subject: `MJAA Connect Intro: ${userName} + ${match.name}`,
       text: `Hi ${userName} and ${match.name},\n\n${introBody}\n\nI'll leave it to you both to find a time to connect, and I'd love to hear how it goes!\n\nCheers,\nMJAA Connect`,
-    });
-    console.log("INTRO EMAIL sent to:", to);
-  } catch (err) {
-    console.error("Gmail send failed:", err);
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("Resend email failed:", res.status, err);
+  } else {
+    console.log("INTRO EMAIL sent to:", userEmail);
   }
 }
 
