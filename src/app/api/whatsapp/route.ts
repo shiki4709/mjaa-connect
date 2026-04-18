@@ -411,8 +411,8 @@ export async function POST(req: Request) {
 
     // Handle accept/skip for pending matches — fast, no LLM call
     if (convo.pendingMatches && convo.pendingMatches.length > 0 && convo.currentMatchIndex !== undefined) {
-      const isAccept = /^(accept|yes|connect|y)$/i.test(lowerBody);
-      const isSkip = /^(skip|next|no|n|pass)$/i.test(lowerBody);
+      const isAccept = /\b(accept|yes|connect)\b/i.test(lowerBody);
+      const isSkip = /\b(skip|next|pass)\b/i.test(lowerBody);
 
       if (isAccept || isSkip) {
         const currentMatch = convo.pendingMatches[convo.currentMatchIndex];
