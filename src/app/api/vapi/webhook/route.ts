@@ -166,12 +166,6 @@ ${memberContext}`,
       return Response.json({ received: true });
     }
 
-    // Send intro message
-    await sendWhatsAppMessage(
-      customerNumber,
-      `Great chatting with you ${userName}! I found ${matches.length} people in our community you should meet 👇`
-    );
-
     // Store pending matches in conversation for accept/skip flow
     const updatedConvo = (await getConversation(customerNumber)) ?? newConversation();
     updatedConvo.pendingMatches = matches.map((match) => {
@@ -184,6 +178,15 @@ ${memberContext}`,
     });
     updatedConvo.currentMatchIndex = 0;
     await setConversation(customerNumber, updatedConvo);
+
+    // Send intro message first, wait for delivery before sending match
+    await sendWhatsAppMessage(
+      customerNumber,
+      `Great chatting with you ${userName}! I found ${matches.length} people in our community you should meet 👇`
+    );
+
+    // Wait 3 seconds for Twilio sandbox rate limit
+    await new Promise((r) => setTimeout(r, 3000));
 
     // Send first match
     const firstMatch = updatedConvo.pendingMatches[0];
