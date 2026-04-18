@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     const callDuration = call?.duration ?? 0;
 
-    if (!customerNumber || !transcript || transcript.length < 50 || callDuration < 30) {
+    if (!customerNumber || !transcript || transcript.length < 50 || callDuration < 5) {
       console.log("VAPI: Skipping — call too short or no real transcript", { customerNumber, transcriptLength: transcript?.length, callDuration });
       return Response.json({ received: true });
     }
