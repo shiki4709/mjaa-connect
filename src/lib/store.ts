@@ -20,7 +20,7 @@ export interface PendingMatch {
   roleCompany: string;
   bullets: string[];
   drawback: string | null;
-  introMessage: string;
+  introMessage?: string;
   linkedin: string | null;
   email: string | null;
 }

@@ -119,21 +119,19 @@ Return ONLY valid JSON — an array of match objects:
     "name": "Full Name",
     "roleCompany": "Role at Company",
     "bullets": [
-      "Specific reason this person is relevant — reference their expertise, what they're building, concrete details",
-      "How their background maps to what the user needs — be specific about the connection",
-      "What they can offer that directly helps the user's goals",
-      "Any logistics or availability context"
+      "One short sentence: why this person is relevant",
+      "One short sentence: how they can help",
+      "One short sentence: practical context"
     ],
-    "drawback": "One honest caveat or limitation of this match (or null if none)",
-    "introMessage": "A copy-paste message the user can send to this person that shows value for BOTH sides. Be specific about what each person brings."
+    "drawback": "Short caveat or null"
   }
 ]
 
-## IMPORTANT:
-- Each bullet should be 1 sentence max — specific but concise.
-- The intro message should be 2-3 sentences max.
-- TOTAL per match must be UNDER 1500 characters. This is a WhatsApp message limit.
-- Be specific but brief. No filler words.
+## CRITICAL RULES:
+- MAX 3 bullets per match, each under 100 characters.
+- Drawback under 80 characters or null.
+- No introMessage field.
+- Keep it SHORT. Total JSON per match must be small.
 
 ## Member Directory:
 ${memberContext}`,
@@ -151,7 +149,6 @@ ${memberContext}`,
       roleCompany: string;
       bullets: string[];
       drawback: string | null;
-      introMessage: string;
     }> = [];
     try {
       // Strip markdown code fences if present (```json ... ```)
