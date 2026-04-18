@@ -438,9 +438,7 @@ export async function POST(req: Request) {
         if (isAccept && currentMatch) {
           if (!convo.acceptedMatches) convo.acceptedMatches = [];
           convo.acceptedMatches.push(currentMatch);
-
-          console.log("ACCEPT:", { userName: convo.profile.name, userEmail: convo.profile.email, matchName: currentMatch.name, matchEmail: currentMatch.email });
-          await sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch);
+          console.log("ACCEPT:", { userName: convo.profile.name, userEmail: convo.profile.email, matchName: currentMatch.name });
         }
 
         convo.currentMatchIndex++;
@@ -448,10 +446,14 @@ export async function POST(req: Request) {
         if (convo.currentMatchIndex < convo.pendingMatches.length) {
           const nextMatch = convo.pendingMatches[convo.currentMatchIndex];
           const msg = formatMatchCard(nextMatch, convo.currentMatchIndex + 1, convo.pendingMatches.length);
+          // Save state FIRST before any slow operations
           await setConversation(phoneNumber, convo);
 
-          // Fire and forget — send next match in background
-          sendWhatsAppMessage(phoneNumber, msg);
+          // Send email and next match in background — don't block TwiML
+          if (isAccept && currentMatch) {
+            sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch).catch((e) => console.error("Email error:", e));
+          }
+          sendWhatsAppMessage(phoneNumber, msg).catch((e) => console.error("Send error:", e));
 
           const ack = isAccept
             ? `Great choice! I've sent an intro to *${currentMatch.name}*. Here's your next match...`
@@ -461,7 +463,14 @@ export async function POST(req: Request) {
           convo.pendingMatches = undefined;
           convo.currentMatchIndex = undefined;
           const accepted = convo.acceptedMatches?.length || 0;
+          // Save state FIRST
           await setConversation(phoneNumber, convo);
+
+          // Send last email in background
+          if (isAccept && currentMatch) {
+            sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch).catch((e) => console.error("Email error:", e));
+          }
+
           const doneMsg = accepted > 0
             ? `That's all your matches! I sent ${accepted} intro${accepted > 1 ? "s" : ""}. Text me anytime you want more connections.`
             : `That's all your matches! Text me anytime you want to try again with different criteria.`;
