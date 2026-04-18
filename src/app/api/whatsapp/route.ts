@@ -6,8 +6,61 @@ import {
   setConversation,
   newConversation,
   type ConversationState,
+  type PendingMatch,
 } from "@/lib/store";
 import { sendWhatsAppMessage } from "@/lib/twilio";
+
+function findMember(name: string) {
+  return members.find(
+    (m) => m.name.toLowerCase() === name.toLowerCase()
+  );
+}
+
+function formatMatchCard(match: PendingMatch, index: number, total: number): string {
+  const bulletText = match.bullets.map((b) => `• ${b}`).join("\n");
+  const drawbackText = match.drawback ? `\nDrawback: ${match.drawback}` : "";
+  const linkedinText = match.linkedin ? `\n${match.linkedin}` : "";
+
+  const msg = `*${match.name}* (${match.roleCompany})
+${bulletText}
+${drawbackText}
+${linkedinText}
+
+Reply *accept* to connect or *skip* to see the next match (${index}/${total})`;
+
+  return msg.length > 1500 ? msg.slice(0, 1497) + "..." : msg;
+}
+
+// Send intro email via Resend (or log if not configured)
+async function sendIntroEmail(
+  userName: string,
+  userRole: string,
+  match: PendingMatch
+): Promise<void> {
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey || !match.email) {
+    console.log("INTRO EMAIL (not sent - no API key or email):", {
+      to: match.email,
+      matchName: match.name,
+      userName,
+    });
+    return;
+  }
+
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "MJAA Connect <connect@mjaa-connect.vercel.app>",
+      to: match.email,
+      subject: `MJAA Connect: Meet ${userName}`,
+      text: `Hi ${match.name},\n\n${userName}${userRole ? ` (${userRole})` : ""} from the MJAA community would love to connect with you.\n\nThey're interested in connecting because of your expertise in ${match.roleCompany}.\n\nWe'll let ${userName} follow up from here!\n\nBest,\nMJAA Connect`,
+    }),
+  }).catch((err) => console.error("Resend email failed:", err));
+}
 
 const memberContext = members
   .map(
@@ -292,6 +345,64 @@ export async function POST(req: Request) {
 
     const convo = existing;
 
+    // Handle accept/skip for pending matches
+    if (convo.pendingMatches && convo.pendingMatches.length > 0 && convo.currentMatchIndex !== undefined) {
+      const isAccept = /^(accept|yes|connect|y)$/i.test(lowerBody);
+      const isSkip = /^(skip|next|no|n|pass)$/i.test(lowerBody);
+
+      if (isAccept || isSkip) {
+        const currentMatch = convo.pendingMatches[convo.currentMatchIndex];
+
+        if (isAccept && currentMatch) {
+          // Store accepted match
+          if (!convo.acceptedMatches) convo.acceptedMatches = [];
+          convo.acceptedMatches.push(currentMatch);
+
+          // Send intro email to both parties
+          if (currentMatch.email) {
+            await sendIntroEmail(
+              convo.profile.name || "MJAA Member",
+              convo.profile.role || "",
+              currentMatch
+            );
+          }
+
+          await sendWhatsAppMessage(
+            phoneNumber,
+            `Great choice! I've sent an intro email to *${currentMatch.name}* connecting you two.`
+          );
+        }
+
+        // Move to next match
+        convo.currentMatchIndex++;
+
+        if (convo.currentMatchIndex < convo.pendingMatches.length) {
+          const nextMatch = convo.pendingMatches[convo.currentMatchIndex];
+          const msg = formatMatchCard(
+            nextMatch,
+            convo.currentMatchIndex + 1,
+            convo.pendingMatches.length
+          );
+          await setConversation(phoneNumber, convo);
+          // Send next match via REST API, return empty TwiML
+          await sendWhatsAppMessage(phoneNumber, msg);
+          return new Response("<Response></Response>", {
+            headers: { "Content-Type": "text/xml" },
+          });
+        } else {
+          // All matches reviewed
+          convo.pendingMatches = undefined;
+          convo.currentMatchIndex = undefined;
+          const accepted = convo.acceptedMatches?.length || 0;
+          await setConversation(phoneNumber, convo);
+          const doneMsg = accepted > 0
+            ? `That's all your matches! I sent ${accepted} intro${accepted > 1 ? "s" : ""}. Text me anytime you want more connections.`
+            : `That's all your matches! Text me anytime you want to try again with different criteria.`;
+          return twimlResponse(doneMsg);
+        }
+      }
+    }
+
     // Check if message contains a LinkedIn URL
     const linkedinUrl = extractLinkedInUrl(body);
     if (linkedinUrl && !convo.linkedinLoaded) {
@@ -412,13 +523,13 @@ Can offer: ${convo.profile.canOffer || "not specified"}`,
         ],
       });
 
-      // Parse and send each match separately via REST API
+      // Parse matches and start accept/skip flow
       try {
         const cleaned = matchResult.text
           .replace(/^```(?:json)?\s*/i, "")
           .replace(/\s*```\s*$/, "")
           .trim();
-        const matches = JSON.parse(cleaned) as Array<{
+        const rawMatches = JSON.parse(cleaned) as Array<{
           name: string;
           roleCompany: string;
           bullets: string[];
@@ -426,22 +537,24 @@ Can offer: ${convo.profile.canOffer || "not specified"}`,
           introMessage: string;
         }>;
 
-        for (const match of matches) {
-          const bulletText = match.bullets.map((b) => `• ${b}`).join("\n");
-          const drawbackText = match.drawback
-            ? `\nDrawback: ${match.drawback}`
-            : "";
-          const msg = `*${match.name}* (${match.roleCompany})
-${bulletText}
-${drawbackText}`;
-          const truncated = msg.length > 1500 ? msg.slice(0, 1497) + "..." : msg;
-          await sendWhatsAppMessage(phoneNumber, truncated);
-        }
+        // Enrich with linkedin/email and store as pending
+        const enriched: PendingMatch[] = rawMatches.map((match) => {
+          const member = findMember(match.name);
+          return {
+            ...match,
+            linkedin: member?.linkedin ?? null,
+            email: member?.email ?? null,
+          };
+        });
 
-        await sendWhatsAppMessage(
-          phoneNumber,
-          `Just copy-paste any of those intros to reach out! Text me here anytime you want different connections.`
-        );
+        convo.pendingMatches = enriched;
+        convo.currentMatchIndex = 0;
+        convo.acceptedMatches = [];
+        await setConversation(phoneNumber, convo);
+
+        // Send first match only
+        const msg = formatMatchCard(enriched[0], 1, enriched.length);
+        await sendWhatsAppMessage(phoneNumber, msg);
       } catch {
         const fallback = matchResult.text.length > 1500
           ? matchResult.text.slice(0, 1497) + "..."

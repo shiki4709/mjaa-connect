@@ -1,15 +1,37 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import members from "@/data/members.json";
-import { getConversation, setConversation, newConversation } from "@/lib/store";
+import { getConversation, setConversation, newConversation, type PendingMatch } from "@/lib/store";
 import { sendWhatsAppMessage } from "@/lib/twilio";
 
 const memberContext = members
   .map(
     (m) =>
-      `- ${m.name} | ${m.role} at ${m.company} | Industry: ${m.industry}\n  Expertise: ${m.expertise.join(", ")}\n  Looking for: ${m.lookingFor}\n  Can offer: ${m.canOffer}`
+      `- [ID:${m.id}] ${m.name} | ${m.role} at ${m.company} | Industry: ${m.industry}\n  Expertise: ${m.expertise.join(", ")}\n  Looking for: ${m.lookingFor}\n  Can offer: ${m.canOffer}`
   )
   .join("\n\n");
+
+// Lookup member by name for linkedin/email
+function findMember(name: string) {
+  return members.find(
+    (m) => m.name.toLowerCase() === name.toLowerCase()
+  );
+}
+
+function formatMatchCard(match: PendingMatch, index: number, total: number): string {
+  const bulletText = match.bullets.map((b) => `• ${b}`).join("\n");
+  const drawbackText = match.drawback ? `\nDrawback: ${match.drawback}` : "";
+  const linkedinText = match.linkedin ? `\n${match.linkedin}` : "";
+
+  const msg = `*${match.name}* (${match.roleCompany})
+${bulletText}
+${drawbackText}
+${linkedinText}
+
+Reply *accept* to connect or *skip* to see the next match (${index}/${total})`;
+
+  return msg.length > 1500 ? msg.slice(0, 1497) + "..." : msg;
+}
 
 export async function POST(req: Request) {
   try {
@@ -150,29 +172,23 @@ ${memberContext}`,
       `Great chatting with you ${userName}! I found ${matches.length} people in our community you should meet 👇`
     );
 
-    // Send each match as a separate message — Boardy style
-    for (const match of matches) {
-      const bulletText = match.bullets.map((b) => `• ${b}`).join("\n");
-      const drawbackText = match.drawback
-        ? `\nDrawback: ${match.drawback}`
-        : "";
+    // Store pending matches in conversation for accept/skip flow
+    const updatedConvo = (await getConversation(customerNumber)) ?? newConversation();
+    updatedConvo.pendingMatches = matches.map((match) => {
+      const member = findMember(match.name);
+      return {
+        ...match,
+        linkedin: member?.linkedin ?? null,
+        email: member?.email ?? null,
+      };
+    });
+    updatedConvo.currentMatchIndex = 0;
+    await setConversation(customerNumber, updatedConvo);
 
-      const matchMessage = `*${match.name}* (${match.roleCompany})
-${bulletText}
-${drawbackText}`;
-
-      // Twilio WhatsApp limit is 1600 chars — truncate if needed
-      const truncated = matchMessage.length > 1500
-        ? matchMessage.slice(0, 1497) + "..."
-        : matchMessage;
-      await sendWhatsAppMessage(customerNumber, truncated);
-    }
-
-    // Follow-up nudge
-    await sendWhatsAppMessage(
-      customerNumber,
-      `Just copy-paste any of those intros to reach out! Text me here anytime you want different connections.`
-    );
+    // Send first match
+    const firstMatch = updatedConvo.pendingMatches[0];
+    const msg = formatMatchCard(firstMatch, 1, matches.length);
+    await sendWhatsAppMessage(customerNumber, msg);
 
     return Response.json({ received: true });
   } catch (error) {

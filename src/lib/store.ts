@@ -14,6 +14,16 @@ export interface UserProfile {
   linkedinUrl?: string;
 }
 
+export interface PendingMatch {
+  name: string;
+  roleCompany: string;
+  bullets: string[];
+  drawback: string | null;
+  introMessage: string;
+  linkedin: string | null;
+  email: string | null;
+}
+
 export interface ConversationState {
   messages: Array<{ role: "user" | "assistant"; content: string }>;
   profile: UserProfile;
@@ -21,6 +31,9 @@ export interface ConversationState {
   linkedinLoaded: boolean;
   vapiCallId?: string;
   vapiCallComplete?: boolean;
+  pendingMatches?: PendingMatch[];
+  currentMatchIndex?: number;
+  acceptedMatches?: PendingMatch[];
 }
 
 const redis = Redis.fromEnv();

@@ -7,7 +7,9 @@
     "industry": "Semiconductor",
     "expertise": ["chip design", "manufacturing processes", "team leadership", "supply chain"],
     "lookingFor": "Mentoring next-gen engineers, exploring AI hardware startups",
-    "canOffer": "Deep semiconductor industry knowledge, hiring connections in chip design, manufacturing operations expertise"
+    "canOffer": "Deep semiconductor industry knowledge, hiring connections in chip design, manufacturing operations expertise",
+    "linkedin": "https://www.linkedin.com/in/david-chen-a3k9/",
+    "email": "david.chen@tsmc.com"
   },
   {
     "id": 2,
@@ -17,7 +19,9 @@
     "industry": "Legal / Venture Capital",
     "expertise": ["startup law", "venture financing", "M&A", "intellectual property"],
     "lookingFor": "Connecting with early-stage founders who need legal guidance",
-    "canOffer": "Startup legal strategy, term sheet reviews, introductions to VCs in her network"
+    "canOffer": "Startup legal strategy, term sheet reviews, introductions to VCs in her network",
+    "linkedin": "https://www.linkedin.com/in/michelle-lin-b7m2/",
+    "email": "mlin@cooley.com"
   },
   {
     "id": 3,
@@ -27,7 +31,9 @@
     "industry": "Finance / Investment Banking",
     "expertise": ["cross-border M&A", "technology sector coverage", "capital markets"],
     "lookingFor": "Meeting founders building fintech or enterprise SaaS",
-    "canOffer": "Financial strategy for growth-stage companies, IPO readiness advice, investor introductions"
+    "canOffer": "Financial strategy for growth-stage companies, IPO readiness advice, investor introductions",
+    "linkedin": "https://www.linkedin.com/in/jason-wu-c5p1/",
+    "email": "jason.wu@jpmorgan.com"
   },
   {
     "id": 4,
@@ -37,7 +43,9 @@
     "industry": "Healthcare / Biotech",
     "expertise": ["drug discovery", "biotech fundraising", "FDA regulatory pathways", "clinical trials"],
     "lookingFor": "Series A investors focused on healthcare, regulatory consultants, partnerships with larger pharma",
-    "canOffer": "Biotech startup experience, regulatory navigation, connections in the healthcare VC community"
+    "canOffer": "Biotech startup experience, regulatory navigation, connections in the healthcare VC community",
+    "linkedin": "https://www.linkedin.com/in/sarah-huang-f4t8/",
+    "email": "sarah@novabiotherapeutics.com"
   },
   {
     "id": 5,
@@ -47,7 +55,9 @@
     "industry": "Technology / AI",
     "expertise": ["product management", "AI/ML products", "search", "consumer tech"],
     "lookingFor": "Advising AI startups, angel investing opportunities",
-    "canOffer": "Product strategy mentorship, big tech hiring referrals, AI product development insights"
+    "canOffer": "Product strategy mentorship, big tech hiring referrals, AI product development insights",
+    "linkedin": "https://www.linkedin.com/in/kevin-chang-d2n6/",
+    "email": "kchang@google.com"
   },
   {
     "id": 6,
@@ -57,7 +67,9 @@
     "industry": "Venture Capital",
     "expertise": ["early-stage investing", "B2B SaaS", "healthcare IT", "market sizing"],
     "lookingFor": "Deal flow from MJAA community founders, co-investment partners",
-    "canOffer": "Seed to Series A funding, portfolio company introductions, fundraising coaching"
+    "canOffer": "Seed to Series A funding, portfolio company introductions, fundraising coaching",
+    "linkedin": "https://www.linkedin.com/in/lisa-tran-e9w3/",
+    "email": "ltran@pacificventures.vc"
   },
   {
     "id": 7,
@@ -67,7 +79,9 @@
     "industry": "Robotics / AI",
     "expertise": ["robotics engineering", "computer vision", "AI strategy", "hardware-software integration"],
     "lookingFor": "Understanding how AI can transform his company's operations, finding technical co-founders for a side venture",
-    "canOffer": "Robotics industry connections, hardware prototyping resources, engineering mentorship"
+    "canOffer": "Robotics industry connections, hardware prototyping resources, engineering mentorship",
+    "linkedin": "https://www.linkedin.com/in/eric-nakamura-g7r5/",
+    "email": "eric.nakamura@ascendrobotics.com"
   },
   {
     "id": 8,
@@ -77,7 +91,9 @@
     "industry": "Consulting / Digital Transformation",
     "expertise": ["digital transformation", "enterprise AI adoption", "change management", "stakeholder communication"],
     "lookingFor": "Transitioning to a startup or tech company, expanding her network in Silicon Valley",
-    "canOffer": "Enterprise sales strategy, Fortune 500 client relationships, presentation and communication coaching"
+    "canOffer": "Enterprise sales strategy, Fortune 500 client relationships, presentation and communication coaching",
+    "linkedin": "https://www.linkedin.com/in/annie-liu-h1q4/",
+    "email": "aliu@deloitte.com"
   },
   {
     "id": 9,
@@ -87,7 +103,9 @@
     "industry": "Enterprise Software",
     "expertise": ["enterprise SaaS", "B2B sales", "startup exits", "company building"],
     "lookingFor": "Mentoring first-time founders, finding his next big idea",
-    "canOffer": "Exit strategy advice, B2B go-to-market playbooks, warm intros to Salesforce ecosystem"
+    "canOffer": "Exit strategy advice, B2B go-to-market playbooks, warm intros to Salesforce ecosystem",
+    "linkedin": "https://www.linkedin.com/in/raymond-chao-j6v0/",
+    "email": "raymond.chao@gmail.com"
   },
   {
     "id": 10,
@@ -97,7 +115,9 @@
     "industry": "Healthcare",
     "expertise": ["health systems", "clinical operations", "health IT adoption", "population health"],
     "lookingFor": "Health tech startups solving real clinical problems, not just apps",
-    "canOffer": "Clinical validation partnerships, pilot programs within Kaiser, healthcare domain expertise"
+    "canOffer": "Clinical validation partnerships, pilot programs within Kaiser, healthcare domain expertise",
+    "linkedin": "https://www.linkedin.com/in/jennifer-tsai-k8z2/",
+    "email": "jennifer.tsai@kp.org"
   },
   {
     "id": 11,
@@ -107,7 +127,9 @@
     "industry": "Technology / Infrastructure",
     "expertise": ["distributed systems", "infrastructure at scale", "backend architecture", "open source"],
     "lookingFor": "Contributing to open source AI projects, exploring startup ideas in developer tools",
-    "canOffer": "System design mentorship, code reviews, big tech interview prep"
+    "canOffer": "System design mentorship, code reviews, big tech interview prep",
+    "linkedin": "https://www.linkedin.com/in/tony-pham-l3x7/",
+    "email": "tpham@meta.com"
   },
   {
     "id": 12,
@@ -117,7 +139,9 @@
     "industry": "Aviation / Marketing",
     "expertise": ["brand marketing", "cross-cultural campaigns", "event sponsorships", "community partnerships"],
     "lookingFor": "Community partnerships for brand visibility, understanding digital marketing trends",
-    "canOffer": "Event sponsorship connections, travel industry insights, marketing strategy for Asian-American audiences"
+    "canOffer": "Event sponsorship connections, travel industry insights, marketing strategy for Asian-American audiences",
+    "linkedin": "https://www.linkedin.com/in/grace-kim-m5y9/",
+    "email": "grace.kim@china-airlines.com"
   },
   {
     "id": 13,
@@ -127,7 +151,9 @@
     "industry": "Management Consulting",
     "expertise": ["corporate strategy", "tech sector analysis", "organizational design", "growth strategy"],
     "lookingFor": "Exploring entrepreneurship, connecting with technical co-founders",
-    "canOffer": "Strategy frameworks, market analysis, executive coaching, McKinsey alumni network"
+    "canOffer": "Strategy frameworks, market analysis, executive coaching, McKinsey alumni network",
+    "linkedin": "https://www.linkedin.com/in/brian-hsu-n2c6/",
+    "email": "bhsu@mckinsey.com"
   },
   {
     "id": 14,
@@ -137,7 +163,9 @@
     "industry": "EdTech / AI",
     "expertise": ["AI tutoring", "K-12 education", "product-led growth", "early-stage fundraising"],
     "lookingFor": "Pilot schools in the Bay Area, a lead designer, Series A readiness advice",
-    "canOffer": "EdTech market insights, Y Combinator application tips (YC W24), founder-to-founder support"
+    "canOffer": "EdTech market insights, Y Combinator application tips (YC W24), founder-to-founder support",
+    "linkedin": "https://www.linkedin.com/in/diana-wen-p4b1/",
+    "email": "diana@edupathai.com"
   },
   {
     "id": 15,
@@ -147,7 +175,9 @@
     "industry": "Semiconductor / Corporate VC",
     "expertise": ["corporate venture capital", "semiconductor investment", "cross-Pacific business", "due diligence"],
     "lookingFor": "AI chip startups, companies building on top of semiconductor supply chains",
-    "canOffer": "Corporate VC perspective, cross-Pacific business introductions (Taiwan-US), investment readiness coaching"
+    "canOffer": "Corporate VC perspective, cross-Pacific business introductions (Taiwan-US), investment readiness coaching",
+    "linkedin": "https://www.linkedin.com/in/michael-tang-q8d5/",
+    "email": "michael.tang@umccapital.com"
   },
   {
     "id": 16,
@@ -157,7 +187,9 @@
     "industry": "Technology / Mobility",
     "expertise": ["machine learning", "marketplace dynamics", "data strategy", "experimentation"],
     "lookingFor": "Mentoring women in tech, advising mobility/logistics startups",
-    "canOffer": "ML expertise, A/B testing and experimentation best practices, data team building"
+    "canOffer": "ML expertise, A/B testing and experimentation best practices, data team building",
+    "linkedin": "https://www.linkedin.com/in/priya-sharma-r3f0/",
+    "email": "psharma@uber.com"
   },
   {
     "id": 17,
@@ -167,7 +199,9 @@
     "industry": "New to Industry",
     "expertise": ["computer science", "web development", "eager to learn", "fresh perspective"],
     "lookingFor": "Industry mentorship, understanding how tech companies actually work, career guidance in AI/ML",
-    "canOffer": "Energy, willingness to help with projects, latest academic knowledge in CS"
+    "canOffer": "Energy, willingness to help with projects, latest academic knowledge in CS",
+    "linkedin": "https://www.linkedin.com/in/alex-nguyen-s6h8/",
+    "email": "alexnguyen@gmail.com"
   },
   {
     "id": 18,
@@ -177,7 +211,9 @@
     "industry": "Cybersecurity",
     "expertise": ["cybersecurity sales", "enterprise partnerships", "channel strategy", "CISO relationships"],
     "lookingFor": "Cybersecurity startups to advise or invest in, expanding her executive network",
-    "canOffer": "Go-to-market strategy for security products, CISO introductions, enterprise deal structuring"
+    "canOffer": "Go-to-market strategy for security products, CISO introductions, enterprise deal structuring",
+    "linkedin": "https://www.linkedin.com/in/cindy-zhao-t9j2/",
+    "email": "czhao@paloaltonetworks.com"
   },
   {
     "id": 19,
@@ -187,7 +223,9 @@
     "industry": "Food & Hospitality",
     "expertise": ["restaurant operations", "hospitality management", "community events", "catering"],
     "lookingFor": "Tech solutions for restaurant management, partnerships for community events",
-    "canOffer": "Event venues and catering for MJAA events, small business perspective, community gathering spaces"
+    "canOffer": "Event venues and catering for MJAA events, small business perspective, community gathering spaces",
+    "linkedin": "https://www.linkedin.com/in/henry-lee-u1k7/",
+    "email": "henry@bamboogardengroup.com"
   },
   {
     "id": 20,
@@ -197,6 +235,8 @@
     "industry": "Nonprofit / Community Development",
     "expertise": ["nonprofit management", "grant writing", "community organizing", "AAPI advocacy"],
     "lookingFor": "Tech volunteers for nonprofit projects, corporate sponsors, cross-community partnerships",
-    "canOffer": "Nonprofit formation guidance, grant opportunities, connections to AAPI organizations nationwide"
+    "canOffer": "Nonprofit formation guidance, grant opportunities, connections to AAPI organizations nationwide",
+    "linkedin": "https://www.linkedin.com/in/stephanie-ma-v5l3/",
+    "email": "sma@apcf.org"
   }
 ]
