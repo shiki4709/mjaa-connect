@@ -49,7 +49,7 @@ async function sendIntroEmail(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "MJAA Connect <connect@mjaa-connect.vercel.app>",
+      from: "MJAA Connect <onboarding@resend.dev>",
       to: match.email,
       subject: `MJAA Connect: Meet ${userName}`,
       text: `Hi ${match.name},\n\n${userName}${userRole ? ` (${userRole})` : ""} from the MJAA community would love to connect with you.\n\nThey're interested in connecting because of your expertise in ${match.roleCompany}.\n\nWe'll let ${userName} follow up from here!\n\nBest,\nMJAA Connect`,
