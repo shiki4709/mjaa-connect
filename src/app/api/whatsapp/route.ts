@@ -53,6 +53,8 @@ async function sendIntroEmail(
   // Only CC the matched person if we have a verified domain (not onboarding@resend.dev)
   // For now, just send to the user with the matched person's info
 
+  const matchContext = match.bullets ? match.bullets.slice(0, 2).join(", and ").toLowerCase() : "shared interests";
+
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -63,7 +65,7 @@ async function sendIntroEmail(
       from: "MJAA Connect <onboarding@resend.dev>",
       to: recipients,
       subject: `MJAA Connect Intro: ${userName} + ${match.name}`,
-      text: `Hi ${userName} and ${match.name},\n\nExcited to connect you both!\n\n${userName}${userRole ? ` (${userRole})` : ""} is looking to connect with people in the MJAA community, and ${match.name} (${match.roleCompany}) is a great match.\n\nI'll leave it to you both to find a time to connect. Just reply-all to this email to get the conversation going!\n\nCheers,\nMJAA Connect`,
+      text: `Hi ${userName} and ${match.name},\n\nExcited to connect you both — ${userName}${userRole ? ` (${userRole})` : ""} and ${match.name} (${match.roleCompany}) look like a great match because ${matchContext}.\n\nI'll leave it to you both to find a time to connect, and I'd love to hear how it goes!\n\nCheers,\nMJAA Connect`,
     }),
   });
 
@@ -352,14 +354,15 @@ Looking for: ${lookingFor}`,
     // Normal response — send via REST API
     convo.messages.push({ role: "assistant", content: aiResponse });
 
-    // Simple name extraction from early messages
-    if (!convo.profile.name && convo.messages.length >= 2) {
+    // Name extraction: the SECOND user message is the name reply
+    // (first message is "hi"/"ok", bot asks "What's your name?", second is the name)
+    if (!convo.profile.name && convo.messages.length >= 4) {
       const userMsgs = convo.messages.filter((m) => m.role === "user");
-      if (userMsgs.length >= 1) {
-        const firstReply = userMsgs[0].content.trim();
-        // If the first user message is short (likely a name), use it
-        if (firstReply.length < 30 && !firstReply.includes(" ") || firstReply.split(" ").length <= 3) {
-          convo.profile.name = firstReply;
+      if (userMsgs.length >= 2) {
+        const nameReply = userMsgs[1].content.trim();
+        // Only use it if it looks like a name (short, no URLs, no emails)
+        if (nameReply.length < 40 && !nameReply.includes("@") && !nameReply.includes("http")) {
+          convo.profile.name = nameReply;
         }
       }
     }
