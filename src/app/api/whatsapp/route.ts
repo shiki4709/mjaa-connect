@@ -53,7 +53,22 @@ async function sendIntroEmail(
   // Only CC the matched person if we have a verified domain (not onboarding@resend.dev)
   // For now, just send to the user with the matched person's info
 
-  const matchContext = match.bullets ? match.bullets.slice(0, 2).join(", and ").toLowerCase() : "shared interests";
+  // Generate personalized intro using Claude — specific context about both people
+  const introResult = await generateText({
+    model: anthropic("claude-haiku-4-5-20251001"),
+    system: `Write a short intro email connecting two people. Be specific about WHY they should connect — reference what each person does and how it's relevant to the other. 2-3 sentences max. No greeting or sign-off, just the connecting paragraph. Be warm but concrete.`,
+    messages: [
+      {
+        role: "user",
+        content: `Connect these two people:
+Person 1: ${userName}${userRole ? `, ${userRole}` : ""}
+Person 2: ${match.name}, ${match.roleCompany}
+Match reasons: ${match.bullets?.join("; ") || "shared professional interests"}`,
+      },
+    ],
+  });
+
+  const introBody = introResult.text.trim();
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -65,7 +80,7 @@ async function sendIntroEmail(
       from: "MJAA Connect <onboarding@resend.dev>",
       to: recipients,
       subject: `MJAA Connect Intro: ${userName} + ${match.name}`,
-      text: `Hi ${userName} and ${match.name},\n\nExcited to connect you both — ${userName}${userRole ? ` (${userRole})` : ""} and ${match.name} (${match.roleCompany}) look like a great match because ${matchContext}.\n\nI'll leave it to you both to find a time to connect, and I'd love to hear how it goes!\n\nCheers,\nMJAA Connect`,
+      text: `Hi ${userName} and ${match.name},\n\n${introBody}\n\nI'll leave it to you both to find a time to connect, and I'd love to hear how it goes!\n\nCheers,\nMJAA Connect`,
     }),
   });
 
