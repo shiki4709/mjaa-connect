@@ -485,11 +485,15 @@ export async function POST(req: Request) {
       /give you a call/i.test(aiResponse) ||
       /ring(ing)? you/i.test(aiResponse);
 
+    console.log("AI RESPONSE:", aiResponse, "WANTS_CALL:", wantsCall);
+
     if (wantsCall) {
+      console.log("TRIGGERING VAPI CALL to:", phoneNumber);
       const callId = await triggerVapiCall(
         phoneNumber,
         convo.profile.name || "there"
       );
+      console.log("VAPI CALL RESULT:", callId);
 
       if (callId) {
         convo.vapiCallId = callId;
