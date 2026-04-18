@@ -421,10 +421,8 @@ export async function POST(req: Request) {
           if (!convo.acceptedMatches) convo.acceptedMatches = [];
           convo.acceptedMatches.push(currentMatch);
 
-          if (currentMatch.email) {
-            // Fire and forget — don't block TwiML response
-            await sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch);
-          }
+          console.log("ACCEPT:", { userName: convo.profile.name, userEmail: convo.profile.email, matchName: currentMatch.name, matchEmail: currentMatch.email });
+          await sendIntroEmail(convo.profile.name || "MJAA Member", convo.profile.email, convo.profile.role || "", currentMatch);
         }
 
         convo.currentMatchIndex++;
