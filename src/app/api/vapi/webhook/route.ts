@@ -48,10 +48,8 @@ export async function POST(req: Request) {
 
     console.log("VAPI END-OF-CALL:", { customerNumber, hasTranscript: !!transcript, transcriptLength: transcript?.length });
 
-    const callDuration = call?.duration ?? 0;
-
-    if (!customerNumber || !transcript || transcript.length < 50 || callDuration < 5) {
-      console.log("VAPI: Skipping — call too short or no real transcript", { customerNumber, transcriptLength: transcript?.length, callDuration });
+    if (!customerNumber || !transcript || transcript.length < 100) {
+      console.log("VAPI: Skipping — no real transcript", { customerNumber, transcriptLength: transcript?.length });
       return Response.json({ received: true });
     }
 
