@@ -476,7 +476,13 @@ export async function POST(req: Request) {
     let aiResponse = result.text;
 
     // Check if the AI wants to trigger a voice call
-    if (aiResponse.includes("[TRIGGER_VOICE_CALL]")) {
+    // Detect call trigger — AI should output [TRIGGER_VOICE_CALL] but sometimes
+    // improvises text like "calling you now". Check for both.
+    const wantsCall = aiResponse.includes("[TRIGGER_VOICE_CALL]") ||
+      /call(ing)? you (now|right now)/i.test(aiResponse) ||
+      /let me call you/i.test(aiResponse);
+
+    if (wantsCall) {
       const callId = await triggerVapiCall(
         phoneNumber,
         convo.profile.name || "there"
