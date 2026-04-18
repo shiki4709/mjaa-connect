@@ -477,10 +477,13 @@ export async function POST(req: Request) {
 
     // Check if the AI wants to trigger a voice call
     // Detect call trigger — AI should output [TRIGGER_VOICE_CALL] but sometimes
-    // improvises text like "calling you now". Check for both.
+    // improvises. Catch all variations.
     const wantsCall = aiResponse.includes("[TRIGGER_VOICE_CALL]") ||
-      /call(ing)? you (now|right now)/i.test(aiResponse) ||
-      /let me call you/i.test(aiResponse);
+      /call(ing)? you/i.test(aiResponse) ||
+      /let me call/i.test(aiResponse) ||
+      /pick up/i.test(aiResponse) ||
+      /give you a call/i.test(aiResponse) ||
+      /ring(ing)? you/i.test(aiResponse);
 
     if (wantsCall) {
       const callId = await triggerVapiCall(
