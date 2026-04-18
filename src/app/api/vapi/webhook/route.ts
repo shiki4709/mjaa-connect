@@ -159,10 +159,7 @@ ${memberContext}`,
 
       const matchMessage = `*${match.name}* (${match.roleCompany})
 ${bulletText}
-${drawbackText}
-
-💬 Intro you can send:
-"${match.introMessage}"`;
+${drawbackText}`;
 
       // Twilio WhatsApp limit is 1600 chars — truncate if needed
       const truncated = matchMessage.length > 1500

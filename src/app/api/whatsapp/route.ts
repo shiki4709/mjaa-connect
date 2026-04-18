@@ -433,10 +433,7 @@ Can offer: ${convo.profile.canOffer || "not specified"}`,
             : "";
           const msg = `*${match.name}* (${match.roleCompany})
 ${bulletText}
-${drawbackText}
-
-💬 Intro you can send:
-"${match.introMessage}"`;
+${drawbackText}`;
           const truncated = msg.length > 1500 ? msg.slice(0, 1497) + "..." : msg;
           await sendWhatsAppMessage(phoneNumber, truncated);
         }
