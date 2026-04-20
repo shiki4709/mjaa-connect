@@ -1,0 +1,21 @@
+# Claude token optimization
+node_modules/
+.next/
+dist/
+build/
+out/
+.turbo/
+*.log
+*.lock
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+coverage/
+.env*
+__pycache__/
+*.pyc
+.git/
+.cache/
+*.min.js
+*.min.css
+*.map
