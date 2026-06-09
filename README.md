@@ -1,5 +1,7 @@
 # MJAA Connect
 
+![Demo](demo.gif)
+
 AI-powered matchmaker for the MJAA/MJW professional community. Built for the MJAA Mentorship Program Pitch Competition.
 
 ## What It Does
